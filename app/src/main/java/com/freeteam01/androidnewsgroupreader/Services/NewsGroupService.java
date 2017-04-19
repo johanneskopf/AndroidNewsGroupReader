@@ -23,28 +23,15 @@ public class NewsGroupService {
 
     private NNTPClient client;
 
-    /**
-     * Connects the Client with the Server, you have to call this function prior to any other function
-     * @throws IOException
-     */
     public void Connect() throws IOException {
         client = new NNTPClient();
         client.connect(hostname);
     }
 
-    /**
-     * Disconnects the Client with the Server
-     * @throws IOException
-     */
     public void Disconnect() throws IOException {
         client.disconnect();
     }
 
-    /**
-     * Returns a list of all Newsgroup names
-     * @return List of all Newsgroup names
-     * @throws IOException
-     */
     public List<String> getAllNewsgroups() throws IOException {
         NewsgroupInfo[] newsgroups = client.listNewsgroups();
 
@@ -56,12 +43,6 @@ public class NewsGroupService {
         return newsgroupeNames;
     }
 
-    /**
-     * Returns a list of all Articles from the specific Newsgroup
-     * @param newsgroup Newsgroup from which the Articles are returned
-     * @return List of all Articles
-     * @throws IOException
-     */
     public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
         NewsgroupInfo group = new NewsgroupInfo();
         client.selectNewsgroup(newsgroup, group);
@@ -70,7 +51,6 @@ public class NewsGroupService {
         HashMap<String, NewsGroupArticle> articles = new HashMap<>();
         SortedMap<Integer, List<Article>> articlesByDepth = new TreeMap<>();
 
-        // filter different depth levels, so that we can build the tree top to bottom
         for (Article article : client.iterateArticleInfo(first, last)) {
             int references = article.getReferences().length;
             if (!articlesByDepth.containsKey(references))
@@ -79,7 +59,6 @@ public class NewsGroupService {
             articlesByDepth.get(references).add(article);
         }
 
-        // construct tree
         for (Article article : articlesByDepth.get(0)) {
             articles.put(article.getArticleId(), new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
         }

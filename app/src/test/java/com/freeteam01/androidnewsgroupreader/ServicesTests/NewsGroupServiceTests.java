@@ -11,10 +11,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by marti on 4/19/17.
- */
-
 public class NewsGroupServiceTests {
 
     @Test

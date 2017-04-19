@@ -49,11 +49,6 @@ public class NewsGroupArticle {
         this.references.addAll(Arrays.asList(references));
     }
 
-    /**
-     * Adds an Article to the Article Tree
-     * @param ngArticle Article to add to the Article Tree
-     * @throws IllegalArgumentException
-     */
     public void addArticle(NewsGroupArticle ngArticle) {
         addArticle(ngArticle, 0);
     }
