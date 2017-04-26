@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">"AndroidNewsGroupReader "</string>
+    <string name="app_name">"FakeNewsGroup"</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="settings">Settings</string>
+    <string name="save">Save</string>
+    <string name="newsgroupseverprompt">Choose a NewsGroupServer.</string>
+
+
+    <string-array name="newsgroupservers">
+        <item>news.tugraz.at</item>
+    </string-array>
+
 </resources>
+
