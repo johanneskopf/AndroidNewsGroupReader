@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -127,19 +128,13 @@ public class MainActivity extends AppCompatActivity {
             try {
                 NewsGroupService service = new NewsGroupService();
                 service.Connect();
-                List<NewsGroupArticle> articles;
-                try {
-                    articles = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
-                }
-                catch (Exception e){
-                    articles = service.getAllArticlesFromNewsgroup("tu-graz.flames");
-                }
+                List<NewsGroupArticle> articles = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
                 for(NewsGroupArticle article: articles){
                     article_names.add(article.getSubject());
                 }
                 service.Disconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e("LOAD_ARTICLE",Log.getStackTraceString(e));
             }
             return article_names;
         }
