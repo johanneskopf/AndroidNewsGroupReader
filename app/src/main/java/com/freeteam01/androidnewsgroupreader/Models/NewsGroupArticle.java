@@ -1,5 +1,9 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import android.util.Log;
+
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,6 +34,34 @@ public class NewsGroupArticle {
     }
 
     public String getSubject() {
+        return subject;
+    }
+
+    public String getSubjectString(){
+        if(subject.startsWith("=?UTF-8?Q?")) {
+            String subject_cut = subject.replace("=?UTF-8?Q?", "");
+            subject_cut = subject_cut.replace("?=", "");
+            Log.d("NGART", subject_cut);
+            ByteArrayOutputStream subject_bytes = new ByteArrayOutputStream();
+            for (int i = 0; i < subject_cut.length(); i++) {
+                char c = subject_cut.charAt(i);
+                if (c == '=') {
+                    String first_value = String.valueOf(subject_cut.charAt(i + 1));
+                    String second_value = String.valueOf(subject_cut.charAt(i + 2));
+                    Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
+                    int converted_int = (int) converted;
+                    subject_bytes.write((byte) converted_int);
+                    i += 2;
+                } else {
+                    subject_bytes.write((byte) c);
+                }
+            }
+            try {
+                return subject_bytes.toString("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
         return subject;
     }
 
