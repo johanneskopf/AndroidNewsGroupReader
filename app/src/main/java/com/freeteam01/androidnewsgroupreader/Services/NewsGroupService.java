@@ -68,7 +68,11 @@ public class NewsGroupService {
             for (Article article : articleList) {
                 NewsGroupArticle ngArticle = new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
                 ngArticle.addReferences(article.getReferences());
-                articles.get(ngArticle.getReferences().get(0)).addArticle(ngArticle);
+                NewsGroupArticle root = articles.get(ngArticle.getReferences().get(0));
+                if(root == null)
+                    articles.put(article.getArticleId(), ngArticle);
+                else
+                    root.addArticle(ngArticle);
             }
         }
 
