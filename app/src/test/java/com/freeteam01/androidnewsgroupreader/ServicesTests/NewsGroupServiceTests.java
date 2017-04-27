@@ -39,7 +39,7 @@ public class NewsGroupServiceTests {
     public void getAllTopicsFromNewsgroup_IsNonEmpty() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
-        List<NewsGroupArticle> articles = service.getAllArticlesFromNewsgroup("tu-graz.flames");
+        List<NewsGroupArticle> articles = service.getAllArticlesFromNewsgroup("tu-graz.algorithmen");
 
         assertFalse(articles.isEmpty());
 
