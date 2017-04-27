@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 service.Connect();
                 List<NewsGroupArticle> articles = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
                 for(NewsGroupArticle article: articles){
-                    article_names.add(article.getSubject());
+                    article_names.add(article.getSubjectString());
                 }
                 service.Disconnect();
             } catch (Exception e) {
