@@ -15,17 +15,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ExpandableListView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     Spinner subscribed_newsgroups_spinner_;
     TreeViewAdapter tree_view_adapter_;
     private String selected_newsgroup_;
+    HashMap<String, String> post_formatted_name_to_id_map_ = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,7 +131,9 @@ public class MainActivity extends AppCompatActivity {
                 service.Connect();
                 List<NewsGroupArticle> articles = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
                 for(NewsGroupArticle article: articles){
-                    article_names.add(article.getSubjectString());
+                    String formatted_subject = article.getSubjectString();
+                    article_names.add(formatted_subject);
+                    post_formatted_name_to_id_map_.put(formatted_subject, article.getArticleID());
                 }
                 service.Disconnect();
             } catch (Exception e) {
@@ -172,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
             String newsgroup_article = getItem(position);
 
             if (convertView == null) {
@@ -181,6 +184,26 @@ public class MainActivity extends AppCompatActivity {
 
             TextView tv_name = (TextView) convertView.findViewById(R.id.tv_subscribed_newsgroup);
             tv_name.setText(newsgroup_article);
+
+            Button button_post = (Button) convertView.findViewById(R.id.post);
+            button_post.setOnClickListener(new View.OnClickListener(){
+                public void onClick(View v){
+                    Intent launch = new Intent(MainActivity.this, PostActivity.class);
+                    String selected_article = post_formatted_name_to_id_map_.get(getItem(position));
+                    Log.d("ARTICLEPARAM", selected_article);
+                    launch.putExtra("article", selected_article);
+                    startActivityForResult(launch, 0);
+                }
+            });
+
+            Button button_answers = (Button) convertView.findViewById(R.id.answers);
+            button_answers.setOnClickListener(new View.OnClickListener(){
+                public void onClick(View v){
+                    //TODO: show child articles
+                    Log.d("ANSWERS", "wow");
+                }
+            });
+
             return convertView;
         }
     }
