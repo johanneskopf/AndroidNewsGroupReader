@@ -5,10 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by marti on 4/19/17.
- */
-
 public class NewsGroupArticle {
     private String id;
     private String articleID;
@@ -64,7 +60,7 @@ public class NewsGroupArticle {
                 if (children.containsKey(ngArticle.getReferences().get(depth + 1)))
                     children.get(ngArticle.getReferences().get(depth + 1)).addArticle(ngArticle, depth + 1);
                 else
-                    throw new IllegalArgumentException("A intermediat node is missing");
+                    throw new IllegalArgumentException("An intermediate node is missing");
             }
         } else {
             throw new IllegalArgumentException("The Reference is not the one it should be");
