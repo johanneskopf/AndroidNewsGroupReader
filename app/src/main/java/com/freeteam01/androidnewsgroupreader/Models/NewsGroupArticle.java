@@ -10,13 +10,14 @@ import java.util.List;
  */
 
 public class NewsGroupArticle {
+    private String id;
     private String articleID;
     private String subject;
     private String date;
     private String from;
 
-    private List<String> references = new ArrayList<>();
-    private HashMap<String, NewsGroupArticle> children = new HashMap<>();
+    private transient List<String> references = new ArrayList<>();
+    private transient HashMap<String, NewsGroupArticle> children = new HashMap<>();
 
     public NewsGroupArticle(String articleId, String subject, String date, String from) {
         this.articleID = articleId;
@@ -24,6 +25,8 @@ public class NewsGroupArticle {
         this.date = date;
         this.from = from;
     }
+
+    public String getId(){return id;}
 
     public String getArticleID() {
         return articleID;
