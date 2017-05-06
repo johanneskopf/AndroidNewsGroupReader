@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-/**
- * Created by marti on 4/19/17.
- */
-
 public class NewsGroupService {
 
     private static String hostname = "news.TUGraz.at";
@@ -35,12 +31,11 @@ public class NewsGroupService {
     public List<String> getAllNewsgroups() throws IOException {
         NewsgroupInfo[] newsgroups = client.listNewsgroups();
 
-        List<String> newsgroupeNames = new ArrayList<>();
+        List<String> newsgroupNames = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupeNames.add(info.getNewsgroup());
+            newsgroupNames.add(info.getNewsgroup());
         }
-
-        return newsgroupeNames;
+        return newsgroupNames;
     }
 
     public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
@@ -76,6 +71,6 @@ public class NewsGroupService {
             }
         }
 
-        return new ArrayList<NewsGroupArticle>(articles.values());
+        return new ArrayList<>(articles.values());
     }
 }

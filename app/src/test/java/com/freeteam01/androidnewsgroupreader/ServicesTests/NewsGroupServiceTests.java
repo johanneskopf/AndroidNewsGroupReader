@@ -17,9 +17,9 @@ public class NewsGroupServiceTests {
     public void getAllNewsgroups_IsNonEmpty() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
-        List<String> newsgrous = service.getAllNewsgroups();
+        List<String> newsgroups = service.getAllNewsgroups();
 
-        assertFalse(newsgrous.isEmpty());
+        assertFalse(newsgroups.isEmpty());
 
         service.Disconnect();
     }
@@ -28,9 +28,9 @@ public class NewsGroupServiceTests {
     public void getAllNewsgroups_ContainsTUGrazFlames() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
-        List<String> newsgrous = service.getAllNewsgroups();
+        List<String> newsgroups = service.getAllNewsgroups();
 
-        assertTrue(newsgrous.contains("tu-graz.flames"));
+        assertTrue(newsgroups.contains("tu-graz.flames"));
 
         service.Disconnect();
     }
