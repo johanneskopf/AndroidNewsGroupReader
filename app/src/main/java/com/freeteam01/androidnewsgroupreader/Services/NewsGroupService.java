@@ -1,6 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Services;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
@@ -28,14 +29,14 @@ public class NewsGroupService {
         client.disconnect();
     }
 
-    public List<String> getAllNewsgroups() throws IOException {
+    public List<NewsGroupEntry> getAllNewsgroups() throws IOException {
         NewsgroupInfo[] newsgroups = client.listNewsgroups();
 
-        List<String> newsgroupNames = new ArrayList<>();
+        List<NewsGroupEntry> newsgroupEntries = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupNames.add(info.getNewsgroup());
+            newsgroupEntries.add(new NewsGroupEntry(info.getArticleCountLong(), info.getNewsgroup(), false));
         }
-        return newsgroupNames;
+        return newsgroupEntries;
     }
 
     public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
