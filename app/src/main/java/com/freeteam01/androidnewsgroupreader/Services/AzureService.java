@@ -2,11 +2,11 @@ package com.freeteam01.androidnewsgroupreader.Services;
 
 import android.content.Context;
 
-import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.microsoft.windowsazure.mobileservices.*;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+
 
 public class AzureService {
     private String mMobileBackendUrl = "https://newsgroupreader.azurewebsites.net";

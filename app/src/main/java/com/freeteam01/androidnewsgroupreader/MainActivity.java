@@ -29,6 +29,8 @@ import java.util.List;
 
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_INTERNET = 0;
@@ -79,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
-
     }
 
     private void permissionCheck() {

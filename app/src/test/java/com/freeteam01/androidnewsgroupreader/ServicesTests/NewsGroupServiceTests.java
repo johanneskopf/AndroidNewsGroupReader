@@ -19,6 +19,7 @@ public class NewsGroupServiceTests {
     public void getAllNewsgroups_IsNonEmpty() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
+
         List<NewsGroupEntry> newsgroups = service.getAllNewsgroups();
 
         assertFalse(newsgroups.isEmpty());
@@ -30,6 +31,7 @@ public class NewsGroupServiceTests {
     public void getAllNewsgroups_ContainsTUGrazFlames() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
+
         List<NewsGroupEntry> newsgroups = service.getAllNewsgroups();
         List<String> newsgroup_names = new ArrayList<>();
         for(NewsGroupEntry newsgroup: newsgroups){
