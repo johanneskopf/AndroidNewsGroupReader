@@ -14,10 +14,6 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-/**
- * Created by marti on 4/19/17.
- */
-
 public class NewsGroupService {
 
     private static String hostname = "news.TUGraz.at";
@@ -76,6 +72,6 @@ public class NewsGroupService {
             }
         }
 
-        return new ArrayList<NewsGroupArticle>(articles.values());
+        return new ArrayList<>(articles.values());
     }
 }

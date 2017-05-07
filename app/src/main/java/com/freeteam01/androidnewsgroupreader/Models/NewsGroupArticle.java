@@ -5,18 +5,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by marti on 4/19/17.
- */
-
 public class NewsGroupArticle {
+    private String id;
     private String articleID;
     private String subject;
     private String date;
     private String from;
 
-    private List<String> references = new ArrayList<>();
-    private HashMap<String, NewsGroupArticle> children = new HashMap<>();
+    private transient List<String> references = new ArrayList<>();
+    private transient HashMap<String, NewsGroupArticle> children = new HashMap<>();
 
     public NewsGroupArticle(String articleId, String subject, String date, String from) {
         this.articleID = articleId;
@@ -24,6 +21,8 @@ public class NewsGroupArticle {
         this.date = date;
         this.from = from;
     }
+
+    public String getId(){return id;}
 
     public String getArticleID() {
         return articleID;
@@ -61,7 +60,7 @@ public class NewsGroupArticle {
                 if (children.containsKey(ngArticle.getReferences().get(depth + 1)))
                     children.get(ngArticle.getReferences().get(depth + 1)).addArticle(ngArticle, depth + 1);
                 else
-                    throw new IllegalArgumentException("A intermediat node is missing");
+                    throw new IllegalArgumentException("An intermediate node is missing");
             }
         } else {
             throw new IllegalArgumentException("The Reference is not the one it should be");

@@ -8,6 +8,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_INTERNET = 0;
@@ -20,6 +22,8 @@ public class MainActivity extends AppCompatActivity {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         permissionCheck();
+
+        AzureService.Initialize(this);
     }
 
     private void permissionCheck() {
