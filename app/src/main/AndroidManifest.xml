@@ -28,6 +28,10 @@
             android:name=".PostActivity"
             android:theme="@style/Base.V21.Theme.AppCompat.Light"
             android:label="Post"/>
+        <activity
+            android:name=".TreeActivity"
+            android:theme="@style/Base.V21.Theme.AppCompat.Light"
+            android:label="Tree"/>
     </application>
 
 </manifest>

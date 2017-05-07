@@ -1,10 +1,12 @@
 package com.freeteam01.androidnewsgroupreader.ServicesTests;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
@@ -17,9 +19,9 @@ public class NewsGroupServiceTests {
     public void getAllNewsgroups_IsNonEmpty() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
-        List<String> newsgrous = service.getAllNewsgroups();
+        List<NewsGroupEntry> newsgroups = service.getAllNewsgroups();
 
-        assertFalse(newsgrous.isEmpty());
+        assertFalse(newsgroups.isEmpty());
 
         service.Disconnect();
     }
@@ -28,9 +30,13 @@ public class NewsGroupServiceTests {
     public void getAllNewsgroups_ContainsTUGrazFlames() throws Exception {
         NewsGroupService service = new NewsGroupService();
         service.Connect();
-        List<String> newsgrous = service.getAllNewsgroups();
+        List<NewsGroupEntry> newsgroups = service.getAllNewsgroups();
+        List<String> newsgroup_names = new ArrayList<>();
+        for(NewsGroupEntry newsgroup: newsgroups){
+            newsgroup_names.add(newsgroup.getName());
+        }
 
-        assertTrue(newsgrous.contains("tu-graz.flames"));
+        assertTrue(newsgroup_names.contains("tu-graz.flames"));
 
         service.Disconnect();
     }

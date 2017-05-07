@@ -1,6 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import android.util.Log;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -9,18 +10,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by marti on 4/19/17.
- */
-
-public class NewsGroupArticle {
+public class NewsGroupArticle implements Parcelable{
+    private String id;
     private String articleID;
     private String subject;
     private String date;
     private String from;
 
-    private List<String> references = new ArrayList<>();
-    private HashMap<String, NewsGroupArticle> children = new HashMap<>();
+    private transient List<String> references = new ArrayList<>();
+    private transient HashMap<String, NewsGroupArticle> children = new HashMap<>();
 
     public NewsGroupArticle(String articleId, String subject, String date, String from) {
         this.articleID = articleId;
@@ -28,6 +26,17 @@ public class NewsGroupArticle {
         this.date = date;
         this.from = from;
     }
+
+    public NewsGroupArticle(Parcel in) {
+        in.readList(this.references, null);
+        this.children = in.readHashMap(NewsGroupArticle.class.getClassLoader());
+        this.articleID = in.readString();
+        this.subject = in.readString();
+        this.date = in.readString();
+        this.from = in.readString();
+    }
+
+    public String getId(){return id;}
 
     public String getArticleID() {
         return articleID;
@@ -41,7 +50,6 @@ public class NewsGroupArticle {
         if(subject.startsWith("=?UTF-8?Q?")) {
             String subject_cut = subject.replace("=?UTF-8?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
-            Log.d("NGART", subject_cut);
             ByteArrayOutputStream subject_bytes = new ByteArrayOutputStream();
             for (int i = 0; i < subject_cut.length(); i++) {
                 char c = subject_cut.charAt(i);
@@ -77,6 +85,10 @@ public class NewsGroupArticle {
         return references;
     }
 
+    public HashMap<String, NewsGroupArticle> getChildren() {
+        return children;
+    }
+
     public void addReferences(String[] references) {
         this.references.addAll(Arrays.asList(references));
     }
@@ -93,10 +105,37 @@ public class NewsGroupArticle {
                 if (children.containsKey(ngArticle.getReferences().get(depth + 1)))
                     children.get(ngArticle.getReferences().get(depth + 1)).addArticle(ngArticle, depth + 1);
                 else
-                    throw new IllegalArgumentException("A intermediat node is missing");
+                    throw new IllegalArgumentException("An intermediate node is missing");
             }
         } else {
             throw new IllegalArgumentException("The Reference is not the one it should be");
         }
     }
+
+    @Override
+    public int describeContents(){
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags){
+        dest.writeList(references);
+        dest.writeMap(children);
+        dest.writeString(articleID);
+        dest.writeString(subject);
+        dest.writeString(date);
+        dest.writeString(from);
+    }
+
+    public static final Parcelable.Creator<NewsGroupArticle> CREATOR = new Parcelable.Creator<NewsGroupArticle>()
+    {
+        public NewsGroupArticle createFromParcel(Parcel in)
+        {
+            return new NewsGroupArticle(in);
+        }
+        public NewsGroupArticle[] newArray(int size)
+        {
+            return new NewsGroupArticle[size];
+        }
+    };
 }

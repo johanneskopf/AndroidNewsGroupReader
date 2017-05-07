@@ -3,6 +3,7 @@ package com.freeteam01.androidnewsgroupreader.Services;
 import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
@@ -15,10 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-/**
- * Created by marti on 4/19/17.
- */
 
 public class NewsGroupService {
 
@@ -35,15 +32,14 @@ public class NewsGroupService {
         client.disconnect();
     }
 
-    public List<String> getAllNewsgroups() throws IOException {
+    public List<NewsGroupEntry> getAllNewsgroups() throws IOException {
         NewsgroupInfo[] newsgroups = client.listNewsgroups();
 
-        List<String> newsgroupeNames = new ArrayList<>();
+        List<NewsGroupEntry> newsgroupEntries = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupeNames.add(info.getNewsgroup());
+            newsgroupEntries.add(new NewsGroupEntry(info.getArticleCountLong(), info.getNewsgroup(), false));
         }
-
-        return newsgroupeNames;
+        return newsgroupEntries;
     }
 
     public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
@@ -79,7 +75,7 @@ public class NewsGroupService {
             }
         }
 
-        return new ArrayList<NewsGroupArticle>(articles.values());
+        return new ArrayList<>(articles.values());
     }
 
     public String getArticleText(String id) throws IOException {
@@ -89,8 +85,6 @@ public class NewsGroupService {
         while((value = r.read()) != -1){
             article_text += (char) value;
         }
-        Log.d("ARTICLEREADER", article_text);
-        Log.d("ARTICLEREADER", String.valueOf(article_text.indexOf("\r\n\r\n")));
         article_text = article_text.substring(article_text.indexOf("\r\n\r\n"));
         return article_text;
     }

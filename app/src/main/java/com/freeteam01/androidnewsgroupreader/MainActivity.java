@@ -23,11 +23,11 @@ import android.widget.TextView;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     TreeViewAdapter tree_view_adapter_;
     private String selected_newsgroup_;
     HashMap<String, String> post_formatted_name_to_id_map_ = new HashMap<>();
+    List<NewsGroupArticle> articles_ = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +55,15 @@ public class MainActivity extends AppCompatActivity {
         tree_view_adapter_ = new TreeViewAdapter(this, new ArrayList<String>());
         tree_view_expandable_list_.setAdapter(tree_view_adapter_);
 
-        LoadNewsGroupsTask loader = new LoadNewsGroupsTask();
-        loader.execute();
+        setSupportActionBar(myToolbar);
+        permissionCheck();
+
+        AzureService.Initialize(this);
+
+        ArrayList<String> newsgroups_names =  new ArrayList<>(AzureService.getInstance().getSubscribedNewsgroupsTestData());
+        spinner_adapter_.addAll(newsgroups_names);
+        spinner_adapter_.notifyDataSetChanged();
+
 
         subscribed_newsgroups_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -72,8 +80,6 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        setSupportActionBar(myToolbar);
-        permissionCheck();
     }
 
     private void permissionCheck() {
@@ -101,27 +107,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class LoadNewsGroupsTask extends AsyncTask<Void, Void, ArrayList<String>> {
-        @Override
-        protected ArrayList<String> doInBackground(Void... params) {
-            ArrayList<String> newsgroups = null;
-            try {
-                NewsGroupService service = new NewsGroupService();
-                service.Connect();
-                newsgroups = new ArrayList<>(service.getAllNewsgroups());
-                service.Disconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return newsgroups;
-        }
-
-        protected void onPostExecute(ArrayList<String> newsgroups) {
-            spinner_adapter_.addAll(newsgroups);
-            spinner_adapter_.notifyDataSetChanged();
-        }
-    }
-
     private class LoadNewsGroupsArticles extends AsyncTask<Void, Void, ArrayList<String>> {
         @Override
         protected ArrayList<String> doInBackground(Void... params) {
@@ -129,8 +114,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 NewsGroupService service = new NewsGroupService();
                 service.Connect();
-                List<NewsGroupArticle> articles = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
-                for(NewsGroupArticle article: articles){
+                articles_ = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
+                for(NewsGroupArticle article: articles_){
                     String formatted_subject = article.getSubjectString();
                     article_names.add(formatted_subject);
                     post_formatted_name_to_id_map_.put(formatted_subject, article.getArticleID());
@@ -190,7 +175,6 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v){
                     Intent launch = new Intent(MainActivity.this, PostActivity.class);
                     String selected_article = post_formatted_name_to_id_map_.get(getItem(position));
-                    Log.d("ARTICLEPARAM", selected_article);
                     launch.putExtra("article", selected_article);
                     startActivityForResult(launch, 0);
                 }
@@ -199,8 +183,16 @@ public class MainActivity extends AppCompatActivity {
             Button button_answers = (Button) convertView.findViewById(R.id.answers);
             button_answers.setOnClickListener(new View.OnClickListener(){
                 public void onClick(View v){
-                    //TODO: show child articles
-                    Log.d("ANSWERS", "wow");
+                    Intent launch = new Intent(MainActivity.this, TreeActivity.class);
+                    String selected_article = post_formatted_name_to_id_map_.get(getItem(position));
+                    Bundle b = new Bundle();
+                    for(NewsGroupArticle article: articles_){
+                        if(article.getArticleID().equals(selected_article)){
+                            b.putParcelable("article", article);
+                            launch.putExtras(b);
+                        }
+                    }
+                    startActivityForResult(launch, 0);
                 }
             });
 
