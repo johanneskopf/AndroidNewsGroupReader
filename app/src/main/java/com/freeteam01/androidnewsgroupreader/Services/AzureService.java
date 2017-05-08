@@ -5,6 +5,8 @@ import android.content.Context;
 import com.microsoft.windowsazure.mobileservices.*;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AzureService {
     private String mMobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
@@ -34,6 +36,14 @@ public class AzureService {
             throw new IllegalStateException("AzureServiceAdapter is not initialized");
         }
         return mInstance;
+    }
+
+    public List<String> getTestData(){
+        List<String> test_groups = new ArrayList<>();
+        test_groups.add("tu-graz.algorithmen");
+        test_groups.add("tu-graz.flames");
+        test_groups.add("tu-graz.lv.cb");
+        return test_groups;
     }
 
     public static boolean isInitialized(){

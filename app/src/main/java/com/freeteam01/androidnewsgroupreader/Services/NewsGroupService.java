@@ -8,6 +8,7 @@ import org.apache.commons.net.nntp.NNTPClient;
 import org.apache.commons.net.nntp.NewsgroupInfo;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,5 +74,16 @@ public class NewsGroupService {
         }
 
         return new ArrayList<>(articles.values());
+    }
+
+    public String getArticleText(String id) throws IOException {
+        Reader r = client.retrieveArticle(id);
+        String article_text = "";
+        int value;
+        while((value = r.read()) != -1){
+            article_text += (char) value;
+        }
+        article_text = article_text.substring(article_text.indexOf("\r\n\r\n"));
+        return article_text;
     }
 }
