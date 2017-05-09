@@ -21,12 +21,6 @@
         android:entries="@array/newsgroupservers"
         android:prompt="@string/newsgroupseverprompt" />
 
-    <Button
-        android:id="@+id/findSelected"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Find entries that are Selected" />
-
     <ListView
         android:id="@+id/lv_newsgroups"
         android:layout_width="match_parent"
