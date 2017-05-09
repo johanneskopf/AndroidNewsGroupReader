@@ -50,7 +50,8 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         permissionCheck();
 
-        AzureService.Initialize(this);
+        if(!AzureService.isInitialized())
+            AzureService.Initialize(this);
         subscribed_newsgroups_ = AzureService.getInstance().getTestData();
 
         subscribed_newsgroups_spinner_ = (Spinner) findViewById(R.id.newsgroups_spinner);
