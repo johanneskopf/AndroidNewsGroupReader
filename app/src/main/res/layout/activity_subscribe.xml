@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.freeteam01.androidnewsgroupreader.SubscribeActivity">
+
+    <TextView
+        android:id="@+id/tv_newsserver"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:text="News Server:" />
+
+    <Spinner
+        android:id="@+id/spin_server"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/newsgroupservers"
+        android:prompt="@string/newsgroupseverprompt" />
+
+    <ListView
+        android:id="@+id/lv_newsgroups"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!--<ListView android:id="@+id/lv_newsgroups" android:layout_width="fill_parent"-->
+        <!--android:layout_height="fill_parent" />-->
+
+    <Button
+        android:id="@+id/btn_save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/save" />
+</LinearLayout>
