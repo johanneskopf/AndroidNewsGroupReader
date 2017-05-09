@@ -17,10 +17,16 @@ import com.microsoft.windowsazure.mobileservices.table.sync.localstore.SQLiteLoc
 import com.microsoft.windowsazure.mobileservices.table.sync.synchandler.SimpleSyncHandler;
 
 import java.net.MalformedURLException;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AzureService {
     private String mobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
@@ -74,8 +80,17 @@ public class AzureService {
         return instance;
     }
 
+
     public static boolean isInitialized() {
         return instance != null;
+    }
+
+    public ArrayList<String> getSubscribedNewsgroupsTestData() {
+        ArrayList<String> test_data = new ArrayList<>();
+        test_data.add("tu-graz.flames");
+        test_data.add("tu-graz.algorithmen");
+        test_data.add("tu-graz.lv.cb");
+        return test_data;
     }
 
     public MobileServiceClient getClient() {
