@@ -85,7 +85,8 @@ public class NewsGroupService {
         while((value = r.read()) != -1){
             article_text += (char) value;
         }
-        article_text = article_text.substring(article_text.indexOf("\r\n\r\n"));
+        final String border = "\r\n\r\n";
+        article_text = article_text.substring(article_text.indexOf(border) + border.length());
         return article_text;
     }
 }
