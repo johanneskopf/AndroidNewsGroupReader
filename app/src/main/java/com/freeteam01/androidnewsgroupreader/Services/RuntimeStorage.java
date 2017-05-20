@@ -3,8 +3,9 @@ package com.freeteam01.androidnewsgroupreader.Services;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Set;
 
 public class RuntimeStorage
 {
@@ -18,7 +19,22 @@ public class RuntimeStorage
         return instance_;
     }
 
-    HashMap<String, NewsGroupServer> servers_;
+    RuntimeStorage()
+    {
+        //Load OfflineStorage and Sync with Azure!
+
+        //TestCode
+
+        final String tugraz = "news.tugraz.at";
+        addNewsgroupServer(tugraz);
+
+        ArrayList<String> subscribed = new ArrayList<>();
+        subscribed.add("tu-graz.lv.bs");
+        subscribed.add("tu-graz.lv.swp");
+        getNewsgroupServer(tugraz).setSubscribed(subscribed);
+    }
+
+    HashMap<String, NewsGroupServer> servers_ = new HashMap<>();
 
     public NewsGroupServer getNewsgroupServer(String name)
     {
@@ -40,4 +56,9 @@ public class RuntimeStorage
     void loadNewsgroups(String server) throws IOException {
         servers_.get(server).loadNewsGroups();
     }
+
+    public Set<String> getAllNewsgroupServers() {
+        return servers_.keySet();
+    }
+
 }

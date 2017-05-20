@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
@@ -20,11 +21,13 @@ import java.util.TreeMap;
 public class NewsGroupService {
 
     private String hostname;
+    private NewsGroupServer server;
 
     private NNTPClient client;
 
-    public NewsGroupService(String name_) {
-        this.hostname = name_;
+    public NewsGroupService(NewsGroupServer server) {
+        this.server = server;
+        this.hostname = server.getName();
     }
 
     public void Connect() throws IOException {
@@ -41,7 +44,7 @@ public class NewsGroupService {
 
         List<NewsGroupEntry> newsgroupEntries = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupEntries.add(new NewsGroupEntry(safeLongToInt(info.getArticleCountLong()), info.getNewsgroup(), false));
+            newsgroupEntries.add(new NewsGroupEntry(server, safeLongToInt(info.getArticleCountLong()), info.getNewsgroup(), false));
         }
         return newsgroupEntries;
     }

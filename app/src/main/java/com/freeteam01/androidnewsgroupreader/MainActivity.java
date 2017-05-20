@@ -22,11 +22,13 @@ import android.widget.TextView;
 import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,23 +37,26 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     private static final int REQUEST_INTERNET = 0;
 
     Spinner subscribed_newsgroups_spinner_;
-    SubscribedNGSpinnerAdapter spinner_adapter_;
+    Spinner newsgroupsserver_spinner_;
+    NewsGroupSubscribedSpinnerAdapter subscribed_spinner_adapter_;
+    NewsgroupServerSpinnerAdapter server_spinner_adapter_;
     List<NewsGroupArticle> articles_ = new ArrayList<>();
     ListView post_list_view_;
     PostViewAdapter post_view_adapter_;
     private List<String> subscribed_newsgroups_;
     private String selected_newsgroup_;
+    private String selected_server_;
 
     @Override
-    public void onStart(){
+    public void onStart() {
         super.onStart();
 
         // refresh shown data
-/*        spinner_adapter_.clear();*/
+/*        subscribed_spinner_adapter_.clear();*/
 /*        if(subscribed_newsgroups_ != null)
         {
-            spinner_adapter_.addAll(subscribed_newsgroups_);
-            spinner_adapter_.notifyDataSetChanged();
+            subscribed_spinner_adapter_.addAll(subscribed_newsgroups_);
+            subscribed_spinner_adapter_.notifyDataSetChanged();
         }*/
 
         /*if (AzureService.getInstance().isAzureServiceEventFired()) {
@@ -70,17 +75,34 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
-        permissionCheck();
 
-        RuntimeStorage.instance().get
+//        if (!AzureService.isInitialized())
+//            AzureService.Initialize(this);
 
-        if (!AzureService.isInitialized())
-            AzureService.Initialize(this);
+        newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
+        server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
+        server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        newsgroupsserver_spinner_.setAdapter(server_spinner_adapter_);
+        showNewsgroupServers();
+
+        newsgroupsserver_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selected_server_ = newsgroupsserver_spinner_.getItemAtPosition(position).toString();
+                showSubscripedNewsgroups();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selected_server_ = null;
+                showSubscripedNewsgroups();
+            }
+        });
 
         subscribed_newsgroups_spinner_ = (Spinner) findViewById(R.id.newsgroups_spinner);
-        spinner_adapter_ = new SubscribedNGSpinnerAdapter(this, new ArrayList<String>());
-        spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        subscribed_newsgroups_spinner_.setAdapter(spinner_adapter_);
+        subscribed_spinner_adapter_ = new NewsGroupSubscribedSpinnerAdapter(this, new ArrayList<String>());
+        subscribed_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        subscribed_newsgroups_spinner_.setAdapter(subscribed_spinner_adapter_);
 
         post_list_view_ = (ListView) findViewById(R.id.treeList);
         post_view_adapter_ = new PostViewAdapter(this, post_list_view_, this, new ArrayList<NewsGroupArticle>());
@@ -90,66 +112,97 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 selected_newsgroup_ = subscribed_newsgroups_spinner_.getItemAtPosition(position).toString();
-                LoadSubscribedNewsGroupsArticles loader = new LoadSubscribedNewsGroupsArticles();
-                loader.execute();
+                showNewGroupArticles();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
                 selected_newsgroup_ = null;
+                showNewGroupArticles();
             }
         });
 
-        AzureService.getInstance().addAzureServiceEventListener(this);
+//        AzureService.getInstance().addAzureServiceEventListener(this);
         Log.d("AzureService", "MainActivity subscribed to AzureEvent");
-        if (AzureService.getInstance().isAzureServiceEventFired()) {
-            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
-        }
+//        if (AzureService.getInstance().isAzureServiceEventFired()) {
+//            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+//            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+//        }
+    }
+
+
+    private void showNewGroupArticles() {
+        final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
+        AsyncTask<NewsGroupServer, Void, Void> task = new AsyncTask<NewsGroupServer, Void, Void>() {
+            @Override
+            protected Void doInBackground(NewsGroupServer... params) {
+                for (NewsGroupServer server : params) {
+                    try {
+                        server.reload();
+                        server.reload(selected_newsgroup_);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                post_view_adapter_.clear();
+                NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
+                post_view_adapter_.addAll(ng.getArticles());
+                post_view_adapter_.notifyDataSetChanged();
+                super.onPostExecute(aVoid);
+            }
+        };
+        task.execute(server);
+    }
+
+    private void showNewsgroupServers() {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        server_spinner_adapter_.clear();
+                        server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
+                        server_spinner_adapter_.notifyDataSetChanged();
+                    }
+                });
+                return null;
+            }
+        };
+        task.execute();
     }
 
     @Override
     public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
-        showSubscripedNewsgroups(getSubscribedNewsgroups(newsGroupEntries));
+        showSubscripedNewsgroups();
     }
 
-    public ArrayList<String> getSubscribedNewsgroups(List<NewsGroupEntry> newsGroupEntries) {
-        ArrayList<String> data = new ArrayList<>();
-        for (NewsGroupEntry newsGroupEntry : newsGroupEntries) {
-            if (newsGroupEntry.isSelected())
-                data.add(newsGroupEntry.getName());
-        }
-        return data;
-    }
 
-    private void showSubscripedNewsgroups(final List<String> subscribedNewsGroupEntries) {
+    private void showSubscripedNewsgroups() {
+        NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
+        final List<String> subscribedNewsGroupEntries = server.getSubscribed();
         AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                           String prev = selected_newsgroup_;
-
-                            spinner_adapter_.clear();
-                            spinner_adapter_.addAll(subscribedNewsGroupEntries);
-                            spinner_adapter_.notifyDataSetChanged();
-
-/*                            if(!prev.equals(selected_newsgroup_)){
-                                LoadSubscribedNewsGroupsArticles loader = new LoadSubscribedNewsGroupsArticles();
-                                loader.execute();
-                            }*/
-                        }
-                    });
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        subscribed_spinner_adapter_.clear();
+                        subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
+                        subscribed_spinner_adapter_.notifyDataSetChanged();
+                    }
+                });
                 return null;
             }
         };
-
-        runAsyncTask(task);
+        task.execute();
     }
 
-    private void permissionCheck() {
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -172,8 +225,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         }
     }
 
-    public class SubscribedNGSpinnerAdapter extends ArrayAdapter<String> {
-        public SubscribedNGSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
+
+    public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
+        public NewsGroupSubscribedSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
             super(context, 0, newsgroups);
         }
 
@@ -191,67 +245,22 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         }
     }
 
-    private class LoadSubscribedNewsGroupsArticles extends AsyncTask<Object, Object, List<NewsGroupArticle>> {
-        ArrayList<NewsGroupEntry> newsgroups = new ArrayList<NewsGroupEntry>();
-
-        @Override
-        protected List<NewsGroupArticle> doInBackground(Object... params) {
-            //ArrayList<String> article_names = new ArrayList<>();
-            try {
-                NewsGroupService service = new NewsGroupService("news.tugraz.at");
-                service.Connect();
-                articles_ = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
-                service.Disconnect();
-            } catch (Exception e) {
-                Log.e("LOAD_ARTICLE", Log.getStackTraceString(e));
-            }
-            return articles_;
-        }
-
-        protected void onPostExecute(List<NewsGroupArticle> articles) {
-            post_view_adapter_.clear();
-            post_view_adapter_.addAll(articles);
-            post_view_adapter_.notifyDataSetChanged();
-        }
-    }
-
-    public class PostViewAdapter extends ArrayAdapter<String> {
-        public PostViewAdapter(Context context, ArrayList<String> newsgroups) {
+    public class NewsgroupServerSpinnerAdapter extends ArrayAdapter<String> {
+        public NewsgroupServerSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
             super(context, 0, newsgroups);
         }
 
         @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            String newsgroup_article = getItem(position);
+        public View getView(int position, View convertView, ViewGroup parent) {
+            String newsgroup = getItem(position);
 
             if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.post, parent, false);
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.newsgroup_post_listview, parent, false);
             }
 
             TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
-            tv_name.setText(newsgroup_article);
-
-            post_list_view_.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent launch = new Intent(MainActivity.this, PostActivity.class);
-                    String selected = getItem(position);
-                    Bundle b = new Bundle();
-                    for(NewsGroupArticle article: articles_){
-                        if(article.getSubjectString().equals(selected)){
-                            b.putParcelable("article", article);
-                            launch.putExtras(b);
-                        }
-                    }
-                    startActivityForResult(launch, 0);
-                }
-            });
-
+            tv_name.setText(newsgroup);
             return convertView;
         }
-    }
-
-    private AsyncTask<Void, Void, Void> runAsyncTask(AsyncTask<Void, Void, Void> task) {
-        return task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 }

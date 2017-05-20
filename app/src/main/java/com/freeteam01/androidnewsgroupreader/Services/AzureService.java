@@ -155,7 +155,8 @@ public class AzureService {
                 try {
                     Log.d("AzureService", "getting items from newsgroup");
                     final List<NewsGroupEntry> results = new ArrayList<>();
-                    NewsGroupService service = new NewsGroupService();
+                    NewsGroupService service = new NewsGroupService(null);
+//                    NewsGroupService service = new NewsGroupService("news.tugraz.at");
                     service.Connect();
                     results.addAll(service.getAllNewsgroups());
                     service.Disconnect();
@@ -419,13 +420,13 @@ public class AzureService {
 
                 try {
                     newsGroupEntries.clear();
-                    newsGroupEntries.add(new NewsGroupEntry(0, "tu-graz.algo", false));
-                    newsGroupEntries.add(new NewsGroupEntry(1, "tu-graz.datenbanken", true));
-                    newsGroupEntries.add(new NewsGroupEntry(2, "tu-graz.diverses", false));
-                    newsGroupEntries.add(new NewsGroupEntry(3, "tu-graz.skripten", true));
-                    newsGroupEntries.add(new NewsGroupEntry(4, "tu-graz.telekom", true));
-                    newsGroupEntries.add(new NewsGroupEntry(5, "tu-graz.veranstaltungen", false));
-                    newsGroupEntries.add(new NewsGroupEntry(6, "tu-graz.wohnungsmarkt", false));
+//                    newsGroupEntries.add(new NewsGroupEntry(0, "tu-graz.algo", false));
+//                    newsGroupEntries.add(new NewsGroupEntry(1, "tu-graz.datenbanken", true));
+//                    newsGroupEntries.add(new NewsGroupEntry(2, "tu-graz.diverses", false));
+//                    newsGroupEntries.add(new NewsGroupEntry(3, "tu-graz.skripten", true));
+//                    newsGroupEntries.add(new NewsGroupEntry(4, "tu-graz.telekom", true));
+//                    newsGroupEntries.add(new NewsGroupEntry(5, "tu-graz.veranstaltungen", false));
+//                    newsGroupEntries.add(new NewsGroupEntry(6, "tu-graz.wohnungsmarkt", false));
 
                     fireAzureServiceEvent(newsGroupEntries);
                 } catch (final Exception e) {

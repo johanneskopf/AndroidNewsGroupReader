@@ -17,9 +17,19 @@
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
+
     <TextView
         style="@style/Headline"
         android:text="@string/newsgroupseverprompt" />
+
+    <Spinner
+        android:id="@+id/newsgroupsserver_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        style="@style/Headline"
+        android:text="@string/newsgroupprompt" />
 
     <Spinner
         android:id="@+id/newsgroups_spinner"

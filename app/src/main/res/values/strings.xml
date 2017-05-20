@@ -6,6 +6,7 @@
     <string name="newsgroupseverprompt">Choose a NewsGroupServer.</string>
     <string name="answer">Answer</string>
     <string name="articles">Articles</string>
+    <string name="newsgroupprompt">Choose a Newsgroup</string>
 
 
     <string-array name="newsgroupservers">

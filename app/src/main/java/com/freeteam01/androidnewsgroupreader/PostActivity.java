@@ -136,7 +136,8 @@ public class PostActivity extends AppCompatActivity {
         protected ArrayList<String> doInBackground(Void... params) {
             ArrayList<String> article_text = new ArrayList<>();
             try {
-                NewsGroupService service = new NewsGroupService("news.tugraz.at");
+//                NewsGroupService service = new NewsGroupService("news.tugraz.at");
+                NewsGroupService service = new NewsGroupService(null);
                 service.Connect();
                 if(article_.getArticleID() != null)
                     article_text.add(service.getArticleText(article_.getArticleID()));
