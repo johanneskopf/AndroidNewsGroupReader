@@ -18,23 +18,29 @@ import com.microsoft.windowsazure.mobileservices.table.sync.synchandler.SimpleSy
 
 import java.net.MalformedURLException;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.ArrayList;
-
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AzureService {
     private String mobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
     private MobileServiceClient client;
     private static AzureService instance = null;
     private MobileServiceSyncTable<NewsGroupEntry> newsGroupEntryTable;
+    private List<NewsGroupEntry> newsGroupEntries;
+    private boolean azureServiceEventFired = false;
+
+    protected Vector _listeners;
 
     private AzureService(Context context) {
+        this.newsGroupEntries = new ArrayList<>();
         try {
             client = new MobileServiceClient(mobileBackendUrl, context);
 
@@ -53,6 +59,8 @@ public class AzureService {
 
             initLocalStore().get();
 
+            loadLocalNewsgroups();
+
 //            refreshItemsFromTable();
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -63,6 +71,150 @@ public class AzureService {
         } catch (MobileServiceLocalStoreException e) {
             e.printStackTrace();
         }
+    }
+
+    public void addAzureServiceEventListener(AzureServiceEvent listener) {
+        if (_listeners == null)
+            _listeners = new Vector();
+
+        _listeners.addElement(listener);
+    }
+
+    protected void fireAzureServiceEvent(List<NewsGroupEntry> newsGroupEntries) {
+        Log.d("AzureService", "fireAzureServiceEvent");
+        if (_listeners != null && !_listeners.isEmpty()) {
+            Enumeration e = _listeners.elements();
+            while (e.hasMoreElements()) {
+                Log.d("AzureService", "fireAzureServiceEvent for a listener");
+                AzureServiceEvent ev = (AzureServiceEvent) e.nextElement();
+                ev.OnNewsgroupsLoaded(newsGroupEntries);
+            }
+        }
+        setAzureServiceEventFired(true);
+    }
+
+    private void loadLocalNewsgroups() {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    final List<NewsGroupEntry> storedEntries = getLocalNewsGroupEntries();
+                    newsGroupEntries.clear();
+                    newsGroupEntries.addAll(storedEntries);
+                    Log.d("AzureService", "loaded newsgroupentries from local storage");
+                } catch (final Exception e) {
+                    Log.d("AzureService", "loadLocalNewsgroups: " + e.getMessage());
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                fireAzureServiceEvent(newsGroupEntries);
+                syncLocalWithRemote();
+            }
+        };
+
+        runAsyncTask(task);
+    }
+
+    private void syncLocalWithRemote() {
+
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    Log.d("AzureService", "sync items with remote");
+                    final List<NewsGroupEntry> storedEntries = syncNewsGroupEntries();
+                    newsGroupEntries.clear();
+                    newsGroupEntries.addAll(storedEntries);
+                    Log.d("AzureService", "synced items with remote");
+                    fireAzureServiceEvent(newsGroupEntries);
+                } catch (final Exception e) {
+                    Log.d("AzureService", "syncLocalWithRemote: " + e.getMessage());
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                fireAzureServiceEvent(newsGroupEntries);
+                syncLocalWithNewsgroup();
+            }
+        };
+
+        runAsyncTask(task);
+    }
+
+    private void syncLocalWithNewsgroup() {
+
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                try {
+                    Log.d("AzureService", "getting items from newsgroup");
+                    final List<NewsGroupEntry> results = new ArrayList<>();
+                    NewsGroupService service = new NewsGroupService();
+                    service.Connect();
+                    results.addAll(service.getAllNewsgroups());
+                    service.Disconnect();
+                    Collections.sort(results, new NewsGroupEntryComparator());
+                    Log.d("AzureService", "loaded items from newsgroup");
+
+                    try {
+                        boolean fireAzureEvent = false;
+                        for (NewsGroupEntry item : results) {
+                            NewsGroupEntry localStored = getEntryWithName(newsGroupEntries, item.getName());
+                            if (localStored == null) {
+                                NewsGroupEntry added = addItemInTable(item);
+                                newsGroupEntries.add(added);
+                                Log.d("AzureService", "stored item locally: " + added.getName());
+                                fireAzureEvent = true;
+                            } else {
+                                boolean changed = false;
+                                if (item.getArticleCount() != localStored.getArticleCount()) {
+                                    localStored.setArticleCount(item.getArticleCount());
+                                    changed = true;
+                                }
+                                if (changed) {
+                                    updateItemInTable(localStored);
+                                    Log.d("AzureService", "changed item locally: " + localStored.getName());
+                                    fireAzureEvent = true;
+                                }
+                            }
+                        }
+
+                        for (int entry = 0; entry < newsGroupEntries.size(); entry++)
+                        {
+                            NewsGroupEntry local = newsGroupEntries.get(entry);
+                            NewsGroupEntry item = getEntryWithName(results, local.getName());
+                            if (item == null) {
+                                deleteItemFromTable(local);
+                                newsGroupEntries.remove(local);
+                            }
+                        }
+                        if (fireAzureEvent)
+                            fireAzureServiceEvent(newsGroupEntries);
+                    } catch (ExecutionException e) {
+                        Log.d("AzureService", e.getMessage());
+                    } catch (InterruptedException e) {
+                        Log.d("AzureService", e.getMessage());
+                    }
+                    Log.d("AzureService", "synced items with newsgroup");
+                } catch (final Exception e) {
+                    Log.d("AzureService", e.getMessage());
+                }
+                return null;
+            }
+
+//            @Override
+//            protected void onPostExecute(Void result) {
+//                fireAzureServiceEvent(newsGroupEntries);
+//            }
+        };
+
+        runAsyncTask(task);
     }
 
     public static void Initialize(Context context) {
@@ -85,13 +237,22 @@ public class AzureService {
         return instance != null;
     }
 
-    public ArrayList<String> getSubscribedNewsgroupsTestData() {
+/*    public ArrayList<String> getSubscribedNewsgroupsTestData() {
         ArrayList<String> test_data = new ArrayList<>();
         test_data.add("tu-graz.flames");
         test_data.add("tu-graz.algorithmen");
         test_data.add("tu-graz.lv.cb");
         return test_data;
-    }
+    }*/
+
+/*    public ArrayList<String> getSubscribedNewsgroups() {
+        ArrayList<String> data = new ArrayList<>();
+        for (NewsGroupEntry newsGroupEntry : newsGroupEntries) {
+            if (newsGroupEntry.isSelected())
+                data.add(newsGroupEntry.getName());
+        }
+        return data;
+    }*/
 
     public MobileServiceClient getClient() {
         return client;
@@ -137,8 +298,7 @@ public class AzureService {
                     syncContext.push().get();
                     newsGroupEntryTable.pull(null).get();
                 } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-//                    createAndShowDialogFromTask(e, "Error");
+                    Log.d("AzureService", "sync: " + e.getMessage());
                 }
                 return null;
             }
@@ -162,7 +322,9 @@ public class AzureService {
                     if (syncContext.isInitialized())
                         return null;
 
-                    SQLiteLocalStore localStore = new SQLiteLocalStore(client.getContext(), "OfflineStore", null, 1);
+                    int databaseVersion = 1;
+                    String databaseName = "OfflineStore";
+                    SQLiteLocalStore localStore = new SQLiteLocalStore(client.getContext(), databaseName, null, databaseVersion);
 
                     Map<String, ColumnDataType> tableDefinition = new HashMap<String, ColumnDataType>();
                     tableDefinition.put("id", ColumnDataType.String);
@@ -177,8 +339,8 @@ public class AzureService {
                     syncContext.initialize(localStore, handler).get();
 
                 } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-//                    createAndShowDialogFromTask(e, "Error");
+                    Log.d("AzureService", "initLocalStore: " + e.getMessage());
+                    e.printStackTrace();
                 }
 
                 return null;
@@ -186,5 +348,94 @@ public class AzureService {
         };
 
         return runAsyncTask(task);
+    }
+
+    public List<NewsGroupEntry> getNewsGroupEntries() {
+        return newsGroupEntries;
+    }
+
+    public void setSelectedNewsGroupEntries(List<NewsGroupEntry> selectedNewsGroupEntries) {
+        for (NewsGroupEntry changedGroupEntry : selectedNewsGroupEntries) {
+            NewsGroupEntry set = newsGroupEntries.get(newsGroupEntries.indexOf(changedGroupEntry));
+            set.setSelected(changedGroupEntry.isSelected());
+        }
+    }
+
+    public void persistSelectedNewsGroupEntries(final List<NewsGroupEntry> selectedNewsGroupEntries) {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    for (NewsGroupEntry changedEntry : selectedNewsGroupEntries) {
+                        Log.d("AzureService", "Persisting NewsGroupEntry: " + changedEntry);
+                        NewsGroupEntry set = newsGroupEntries.get(newsGroupEntries.indexOf(changedEntry));
+                        set.setSelected(changedEntry.isSelected());
+                        updateItemInTable(changedEntry);
+                        Log.d("AzureService", "Persisted NewsGroupEntry: " + set);
+                    }
+                    if(selectedNewsGroupEntries.size() > 0)
+                        fireAzureServiceEvent(newsGroupEntries);
+                    Log.d("AzureService", "updated selected items in local database");
+                } catch (ExecutionException | InterruptedException e) {
+                    Log.d("AzureService", "persistSelectedNewsGroupEntries: " + e.getMessage());
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+
+        runAsyncTask(task);
+    }
+
+    public boolean isAzureServiceEventFired() {
+        return azureServiceEventFired;
+    }
+
+    public void setAzureServiceEventFired(boolean azureServiceEventFired) {
+        this.azureServiceEventFired = azureServiceEventFired;
+    }
+
+    public class NewsGroupEntryComparator implements Comparator<NewsGroupEntry> {
+        @Override
+        public int compare(NewsGroupEntry o1, NewsGroupEntry o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+    }
+
+    public NewsGroupEntry getEntryWithName(Collection<NewsGroupEntry> c, String name) {
+        for (NewsGroupEntry o : c) {
+            if (o != null && o.getName().equals(name)) {
+                return o;
+            }
+        }
+        return null;
+    }
+
+    private void showEntriesFromTestData() {
+
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                try {
+                    newsGroupEntries.clear();
+                    newsGroupEntries.add(new NewsGroupEntry(0, "tu-graz.algo", false));
+                    newsGroupEntries.add(new NewsGroupEntry(1, "tu-graz.datenbanken", true));
+                    newsGroupEntries.add(new NewsGroupEntry(2, "tu-graz.diverses", false));
+                    newsGroupEntries.add(new NewsGroupEntry(3, "tu-graz.skripten", true));
+                    newsGroupEntries.add(new NewsGroupEntry(4, "tu-graz.telekom", true));
+                    newsGroupEntries.add(new NewsGroupEntry(5, "tu-graz.veranstaltungen", false));
+                    newsGroupEntries.add(new NewsGroupEntry(6, "tu-graz.wohnungsmarkt", false));
+
+                    fireAzureServiceEvent(newsGroupEntries);
+                } catch (final Exception e) {
+                    Log.d("AzureService", e.getMessage());
+                }
+
+                return null;
+            }
+        };
+
+        runAsyncTask(task);
     }
 }
