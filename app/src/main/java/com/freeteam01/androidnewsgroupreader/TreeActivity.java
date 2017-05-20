@@ -71,7 +71,7 @@ public class TreeActivity extends AppCompatActivity{
         protected ArrayList<String> doInBackground(Void... params) {
             ArrayList<String> article_names = new ArrayList<>();
             try {
-                NewsGroupService service = new NewsGroupService();
+                NewsGroupService service = new NewsGroupService("news.tugraz.at");
                 service.Connect();
                 service.Disconnect();
             } catch (Exception e) {

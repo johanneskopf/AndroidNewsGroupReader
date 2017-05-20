@@ -9,14 +9,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public class NewsGroupArticle implements Parcelable{
+public class NewsGroupArticle implements Parcelable {
+    public static final Parcelable.Creator<NewsGroupArticle> CREATOR = new Parcelable.Creator<NewsGroupArticle>() {
+        public NewsGroupArticle createFromParcel(Parcel in) {
+            return new NewsGroupArticle(in);
+        }
+
+        public NewsGroupArticle[] newArray(int size) {
+            return new NewsGroupArticle[size];
+        }
+    };
     private String id;
     private String articleID;
     private String subject;
     private String date;
     private String from;
-
+    private boolean isread;
     private transient List<String> references = new ArrayList<>();
     private transient HashMap<String, NewsGroupArticle> children = new HashMap<>();
 
@@ -25,6 +36,7 @@ public class NewsGroupArticle implements Parcelable{
         this.subject = subject;
         this.date = date;
         this.from = from;
+        this.isread = false;
     }
 
     public NewsGroupArticle(Parcel in) {
@@ -36,7 +48,9 @@ public class NewsGroupArticle implements Parcelable{
         this.from = in.readString();
     }
 
-    public String getId(){return id;}
+    public String getId() {
+        return id;
+    }
 
     public String getArticleID() {
         return articleID;
@@ -46,8 +60,8 @@ public class NewsGroupArticle implements Parcelable{
         return subject;
     }
 
-    public String getSubjectString(){
-        if(subject.startsWith("=?UTF-8?Q?")) {
+    public String getSubjectString() {
+        if (subject.startsWith("=?UTF-8?Q?")) {
             String subject_cut = subject.replace("=?UTF-8?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
             ByteArrayOutputStream subject_bytes = new ByteArrayOutputStream();
@@ -75,6 +89,25 @@ public class NewsGroupArticle implements Parcelable{
 
     public String getDate() {
         return date;
+    }
+
+    public boolean getIsread() {
+        return isread;
+    }
+
+    public void setIsread(boolean isread) {
+        this.isread = isread;
+    }
+
+    public boolean hasUnreadChildren() {
+        for (Map.Entry<String, NewsGroupArticle> article :
+                getChildren().entrySet()) {
+            if(!article.getValue().getIsread() || article.getValue().hasUnreadChildren())
+            {
+              return true;
+            }
+        }
+        return false;
     }
 
     public String getFrom() {
@@ -113,12 +146,12 @@ public class NewsGroupArticle implements Parcelable{
     }
 
     @Override
-    public int describeContents(){
+    public int describeContents() {
         return 0;
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags){
+    public void writeToParcel(Parcel dest, int flags) {
         dest.writeList(references);
         dest.writeMap(children);
         dest.writeString(articleID);
@@ -127,15 +160,8 @@ public class NewsGroupArticle implements Parcelable{
         dest.writeString(from);
     }
 
-    public static final Parcelable.Creator<NewsGroupArticle> CREATOR = new Parcelable.Creator<NewsGroupArticle>()
-    {
-        public NewsGroupArticle createFromParcel(Parcel in)
-        {
-            return new NewsGroupArticle(in);
-        }
-        public NewsGroupArticle[] newArray(int size)
-        {
-            return new NewsGroupArticle[size];
-        }
-    };
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.articleID);
+    }
 }

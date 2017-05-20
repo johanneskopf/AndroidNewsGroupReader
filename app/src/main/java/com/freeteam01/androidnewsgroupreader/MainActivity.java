@@ -19,10 +19,12 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
+import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +32,13 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_INTERNET = 0;
-    private List<String> subscribed_newsgroups_;
-
     Spinner subscribed_newsgroups_spinner_;
     SubscribedNGSpinnerAdapter spinner_adapter_;
-
-    private String selected_newsgroup_;
     List<NewsGroupArticle> articles_ = new ArrayList<>();
-
     ListView post_list_view_;
     PostViewAdapter post_view_adapter_;
+    private List<String> subscribed_newsgroups_;
+    private String selected_newsgroup_;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         permissionCheck();
 
-        if(!AzureService.isInitialized())
+        RuntimeStorage.instance().get
+
+        if (!AzureService.isInitialized())
             AzureService.Initialize(this);
         subscribed_newsgroups_ = AzureService.getInstance().getSubscribedNewsgroupsTestData();
 
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         spinner_adapter_.notifyDataSetChanged();
 
         post_list_view_ = (ListView) findViewById(R.id.treeList);
-        post_view_adapter_ = new PostViewAdapter(this, new ArrayList<String>());
+        post_view_adapter_ = new PostViewAdapter(this, post_list_view_, this, new ArrayList<NewsGroupArticle>());
         post_list_view_.setAdapter(post_view_adapter_);
 
 
@@ -118,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
             String newsgroup = getItem(position);
 
             if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.post, parent, false);
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.newsgroup_post_listview, parent, false);
             }
 
             TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
@@ -134,58 +135,21 @@ public class MainActivity extends AppCompatActivity {
         protected List<NewsGroupArticle> doInBackground(Object... params) {
             //ArrayList<String> article_names = new ArrayList<>();
             try {
-                NewsGroupService service = new NewsGroupService();
+                NewsGroupService service = new NewsGroupService("news.tugraz.at");
                 service.Connect();
                 articles_ = service.getAllArticlesFromNewsgroup(selected_newsgroup_);
                 service.Disconnect();
             } catch (Exception e) {
-                Log.e("LOAD_ARTICLE",Log.getStackTraceString(e));
+                Log.e("LOAD_ARTICLE", Log.getStackTraceString(e));
             }
             return articles_;
         }
 
         protected void onPostExecute(List<NewsGroupArticle> articles) {
             post_view_adapter_.clear();
-            for(NewsGroupArticle article: articles){
-                post_view_adapter_.add(article.getSubjectString());
-            }
+            post_view_adapter_.addAll(articles);
             post_view_adapter_.notifyDataSetChanged();
         }
     }
 
-    public class PostViewAdapter extends ArrayAdapter<String> {
-        public PostViewAdapter(Context context, ArrayList<String> newsgroups) {
-            super(context, 0, newsgroups);
-        }
-
-        @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            String newsgroup_article = getItem(position);
-
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.post, parent, false);
-            }
-
-            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
-            tv_name.setText(newsgroup_article);
-
-            post_list_view_.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent launch = new Intent(MainActivity.this, PostActivity.class);
-                    String selected = getItem(position);
-                    Bundle b = new Bundle();
-                    for(NewsGroupArticle article: articles_){
-                        if(article.getSubjectString().equals(selected)){
-                            b.putParcelable("article", article);
-                            launch.putExtras(b);
-                        }
-                    }
-                    startActivityForResult(launch, 0);
-                }
-            });
-
-            return convertView;
-        }
-    }
 }

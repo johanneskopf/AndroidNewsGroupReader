@@ -19,9 +19,13 @@ import java.util.TreeMap;
 
 public class NewsGroupService {
 
-    private static String hostname = "news.TUGraz.at";
+    private String hostname;
 
     private NNTPClient client;
+
+    public NewsGroupService(String name_) {
+        this.hostname = name_;
+    }
 
     public void Connect() throws IOException {
         client = new NNTPClient();

@@ -323,7 +323,7 @@ public class SubscribeActivity extends AppCompatActivity {
 
                 try {
                     final List<NewsGroupEntry> results = new ArrayList<>();
-                    NewsGroupService service = new NewsGroupService();
+                    NewsGroupService service = new NewsGroupService("news.tugraz.at");
                     service.Connect();
                     results.addAll(service.getAllNewsgroups());
                     service.Disconnect();

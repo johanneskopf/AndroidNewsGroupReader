@@ -1,7 +1,6 @@
 package com.freeteam01.androidnewsgroupreader;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -22,9 +21,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
@@ -58,7 +57,7 @@ public class PostActivity extends AppCompatActivity {
         articles_ = new ArrayList<>(article_.getChildren().values());
 
         tree_list_view_ = (ListView) findViewById(R.id.tree_view);
-        tree_view_adapter_ = new PostViewAdapter(this, new ArrayList<String>());
+        tree_view_adapter_ = new PostViewAdapter(this, tree_list_view_, this, new ArrayList<NewsGroupArticle>());
         tree_list_view_.setAdapter(tree_view_adapter_);
 
         article_text_text_view_ = (TextView) findViewById(R.id.tv_article);
@@ -69,7 +68,8 @@ public class PostActivity extends AppCompatActivity {
 
         tree_view_adapter_.clear();
         flat_.add(article_);
-        tree_view_adapter_.add(article_.getSubjectString());
+//        tree_view_adapter_.add(article_.getSubjectString());
+        tree_view_adapter_.add(article_);
         List<NewsGroupArticle> set_list = new ArrayList<>(article_.getChildren().values());
         setTreeElements(set_list, 1);
         tree_view_adapter_.notifyDataSetChanged();
@@ -80,7 +80,8 @@ public class PostActivity extends AppCompatActivity {
     public void setTreeElements(List<NewsGroupArticle> articles, int depth){
         for (NewsGroupArticle article : articles) {
             flat_.add(article);
-            tree_view_adapter_.add(addNTimes(" ", depth) + article.getSubjectString());
+            tree_view_adapter_.add(article);
+//            tree_view_adapter_.add(addNTimes(" ", depth) + article.getSubjectString());
             if(article.getChildren().values().size() > 0) {
                 List<NewsGroupArticle> set_list = new ArrayList<>(article.getChildren().values());
                 setTreeElements(set_list, depth + 1);
@@ -95,47 +96,47 @@ public class PostActivity extends AppCompatActivity {
         return ret;
     }
 
-    public class PostViewAdapter extends ArrayAdapter<String> {
-        public PostViewAdapter(Context context, ArrayList<String> newsgroups) {
-            super(context, 0, newsgroups);
-        }
-
-        @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            String newsgroup_article = getItem(position);
-
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.post, parent, false);
-            }
-
-            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
-            tv_name.setText(newsgroup_article);
-
-            tree_list_view_.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Log.d("TREEVIE", "item clicked");
-                    for(NewsGroupArticle article: articles_){
-                        if(flat_.get(position) != null){
-                            article_ = flat_.get(position);
-                        }
-                    }
-
-                    LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText();
-                    loader.execute();
-                }
-            });
-
-            return convertView;
-        }
-    }
+//    public class PostViewAdapter extends ArrayAdapter<String> {
+//        public PostViewAdapter(Context context, ArrayList<String> newsgroups) {
+//            super(context, 0, newsgroups);
+//        }
+//
+//        @Override
+//        public View getView(final int position, View convertView, ViewGroup parent) {
+//            String newsgroup_article = getItem(position);
+//
+//            if (convertView == null) {
+//                convertView = LayoutInflater.from(getContext()).inflate(R.layout.newsgroup_post_listview, parent, false);
+//            }
+//
+//            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
+//            tv_name.setText(newsgroup_article);
+//
+//            tree_list_view_.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//                @Override
+//                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                    Log.d("TREEVIE", "item clicked");
+//                    for(NewsGroupArticle article: articles_){
+//                        if(flat_.get(position) != null){
+//                            article_ = flat_.get(position);
+//                        }
+//                    }
+//
+//                    LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText();
+//                    loader.execute();
+//                }
+//            });
+//
+//            return convertView;
+//        }
+//    }
 
     private class LoadNewsGroupsArticleText extends AsyncTask<Void, Void, ArrayList<String>> {
         @Override
         protected ArrayList<String> doInBackground(Void... params) {
             ArrayList<String> article_text = new ArrayList<>();
             try {
-                NewsGroupService service = new NewsGroupService();
+                NewsGroupService service = new NewsGroupService("news.tugraz.at");
                 service.Connect();
                 if(article_.getArticleID() != null)
                     article_text.add(service.getArticleText(article_.getArticleID()));

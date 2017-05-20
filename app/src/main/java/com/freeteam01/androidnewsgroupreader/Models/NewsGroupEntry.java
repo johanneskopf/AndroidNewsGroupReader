@@ -46,10 +46,6 @@ public class NewsGroupEntry {
 
     @Override
     public int hashCode() {
-        /*int result = 17;
-        result = 31 * result + (int)articleCount;
-        result = 31 * result + Objects.hashCode(this.name);
-        return result;*/
         return Objects.hashCode(this.name);
     }
 }
