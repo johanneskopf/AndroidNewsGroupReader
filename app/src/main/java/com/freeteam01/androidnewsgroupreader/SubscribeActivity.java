@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.util.ArrayList;
@@ -31,10 +33,23 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class SubscribeActivity extends AppCompatActivity {
+public class SubscribeActivity extends AppCompatActivity implements AzureServiceEvent {
     private NewsGroupAdapter adapter;
     private List<NewsGroupEntry> items;
     private List<NewsGroupEntry> changedItems;
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        /*if (AzureService.getInstance().isAzureServiceEventFired()) {
+            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+            Log.d("AzureService", "SubscribeActivity loaded entries as AzureEvent was already fired");
+        }*/ /*else {
+            AzureService.getInstance().addAzureServiceEventListener(this);
+            Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
+        }*/
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,7 +64,7 @@ public class SubscribeActivity extends AppCompatActivity {
         adapter = new NewsGroupAdapter(this, items); //R.layout.entry_info
         listView.setAdapter(adapter);
 
-        checkSaveButtonClick();
+//        checkSaveButtonClick();
 
         listView.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view,
@@ -73,8 +88,15 @@ public class SubscribeActivity extends AppCompatActivity {
         // TODO Hint: MobileServiceSyncTable.java  tells you which functions are performing
         // TODO             local operations, and which remote operations
 
-        showLocalNewsgroups();
+//        showLocalNewsgroups();
 //        showEntriesFromTestData();
+
+        AzureService.getInstance().addAzureServiceEventListener(this);
+        Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
+        if (AzureService.getInstance().isAzureServiceEventFired()) {
+            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+            Log.d("AzureService", "SubscribeActivity loaded entries as AzureEvent was already fired");
+        }
     }
 
     @Override
@@ -82,10 +104,44 @@ public class SubscribeActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
+//                AzureService.getInstance().setNewsGroupEntries(items);
+/*                for (NewsGroupEntry newsGroupEntry:changedItems) {
+                    NewsGroupEntry reset = getEntryWithName(items, newsGroupEntry.getName());
+                    reset.setSelected(!newsGroupEntry.isSelected());
+                }*/
+//                AzureService.getInstance().setSelectedNewsGroupEntries(changedItems);
+                AzureService.getInstance().persistSelectedNewsGroupEntries(changedItems);
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
+        showNewsgroups(newsGroupEntries);
+    }
+
+    private void showNewsgroups(final List<NewsGroupEntry> newsGroupEntries) {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        items.clear();
+                        for (NewsGroupEntry item : newsGroupEntries) {
+                            items.add(item);
+                        }
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+                return null;
+            }
+        };
+
+        runAsyncTask(task);
     }
 
     private class NewsGroupAdapter extends BaseAdapter {
@@ -174,7 +230,7 @@ public class SubscribeActivity extends AppCompatActivity {
         }
     }
 
-    private void checkSaveButtonClick() {
+    /*private void checkSaveButtonClick() {
         Button myButton = (Button) findViewById(R.id.btn_save);
         myButton.setOnClickListener(new OnClickListener() {
 
@@ -192,249 +248,7 @@ public class SubscribeActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), responseText, Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    private void persistChangedItems() {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    try {
-                        for (NewsGroupEntry item : changedItems) {
-                            AzureService.getInstance().updateItemInTable(item);
-                        }
-                        changedItems.clear();
-                    } catch (ExecutionException | InterruptedException e) {
-                        Log.d("AzureService", e.getMessage());
-                        createAndShowDialogFromTask(e, "Error");
-                    }
-                    Log.d("AzureService", "updated selected items in local database");
-                } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-                    createAndShowDialogFromTask(e, "Error");
-                }
-
-                return null;
-            }
-        };
-
-        runAsyncTask(task);
-    }
-
-    public NewsGroupEntry getEntryWithName(Collection<NewsGroupEntry> c, String name) {
-        for (NewsGroupEntry o : c) {
-            if (o != null && o.getName().equals(name)) {
-                return o;
-            }
-        }
-        return null;
-    }
-
-    private void showLocalNewsgroups() {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    final List<NewsGroupEntry> storedEntries = AzureService.getInstance().getLocalNewsGroupEntries();
-                    Log.d("AzureService", "loaded items from local storage");
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            items.clear();
-                            for (NewsGroupEntry item : storedEntries) {
-                                items.add(item);
-                            }
-                            adapter.notifyDataSetChanged();
-                        }
-                    });
-                } catch (final Exception e) {
-                    Log.d("AzureService", "local storage load: " + e.getMessage());
-                    createAndShowDialogFromTask(e, "Error");
-                }
-
-                return null;
-            }
-
-//            @Override
-//            protected void onPreExecute() {}
-
-            @Override
-            protected void onPostExecute(Void result) {
-                syncLocalWithRemote();
-            }
-        };
-
-        runAsyncTask(task);
-    }
-
-    private void syncLocalWithRemote() {
-
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    final List<NewsGroupEntry> storedEntries = AzureService.getInstance().syncNewsGroupEntries();
-
-                    Log.d("AzureService", "loaded items from server");
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            items.clear();
-                            for (NewsGroupEntry item : storedEntries) {
-                                items.add(item);
-                            }
-                            adapter.notifyDataSetChanged();
-                        }
-                    });
-                } catch (final Exception e) {
-                    Log.d("AzureService", "refreshItemsFromNewsgroupAndTable: " + e.getMessage());
-                    createAndShowDialogFromTask(e, "Error");
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                syncItemsWithNewsgroup();
-            }
-        };
-
-        runAsyncTask(task);
-    }
-
-    public class NewsGroupEntryComparator implements Comparator<NewsGroupEntry> {
-        @Override
-        public int compare(NewsGroupEntry o1, NewsGroupEntry o2) {
-            return o1.getName().compareTo(o2.getName());
-        }
-    }
-
-    private void syncItemsWithNewsgroup() {
-
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    final List<NewsGroupEntry> results = new ArrayList<>();
-                    NewsGroupService service = new NewsGroupService();
-                    service.Connect();
-                    results.addAll(service.getAllNewsgroups());
-                    service.Disconnect();
-
-                    Collections.sort(results, new NewsGroupEntryComparator());
-
-                    Log.d("AzureService", "loaded items from newsgroup");
-
-                    try {
-                        for (NewsGroupEntry item : results) {
-                            NewsGroupEntry localStored = getEntryWithName(items, item.getName());
-                            if (localStored == null) {
-                                AzureService.getInstance().addItemInTable(item);
-                                Log.d("AzureService", "stored item locally: " + item.getName());
-                            }
-                            // TODO update item if it already exists, and the values have changed
-//                            else
-//                                AzureService.getInstance().updateItemInTable(localStored);
-
-//                            bool exists = AzureService.getInstance().isNewsgroupStored(item);
-                        }
-                    } catch (ExecutionException e) {
-                        Log.d("AzureService", e.getMessage());
-                        createAndShowDialogFromTask(e, "Error");
-                    } catch (InterruptedException e) {
-                        Log.d("AzureService", e.getMessage());
-                        createAndShowDialogFromTask(e, "Error");
-                    }
-
-                    Log.d("AzureService", "synced items with newsgroup");
-
-                    try {
-                        final List<NewsGroupEntry> storedEntries = AzureService.getInstance().getLocalNewsGroupEntries();
-                        Log.d("AzureService", "refreshed items from local storage");
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                items.clear();
-                                for (NewsGroupEntry item : storedEntries) {
-                                    items.add(item);
-                                }
-                                adapter.notifyDataSetChanged();
-                            }
-                        });
-                    } catch (final Exception e) {
-                        Log.d("AzureService", "local storage load: " + e.getMessage());
-                        createAndShowDialogFromTask(e, "Error");
-                    }
-                } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-                    createAndShowDialogFromTask(e, "Error");
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                                /* // TODO delete items which are not in the Newsgroup anymore
-                    for (NewsGroupEntry item : storedEntries) {
-                        NewsGroupEntry crt = getEntryWithName(results, item.getName());
-                        if (crt != null) {
-                            crt.setSelected(item.isSelected());
-                        } else { // not available anymore, therefore delete it
-                            AzureService.getInstance().removeItemFromTable(item);
-                        }
-                    }*/
-            }
-        };
-
-        runAsyncTask(task);
-    }
-
-    private void showEntriesFromTestData() {
-
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    final ArrayList<NewsGroupEntry> results = new ArrayList<NewsGroupEntry>();
-                    results.add(new NewsGroupEntry(0, "tu-graz.algo", false));
-                    results.add(new NewsGroupEntry(1, "tu-graz.datenbanken", true));
-                    results.add(new NewsGroupEntry(2, "tu-graz.diverses", false));
-                    results.add(new NewsGroupEntry(3, "tu-graz.skripten", true));
-                    results.add(new NewsGroupEntry(4, "tu-graz.telekom", true));
-                    results.add(new NewsGroupEntry(5, "tu-graz.veranstaltungen", false));
-                    results.add(new NewsGroupEntry(6, "tu-graz.wohnungsmarkt", false));
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            items.clear();
-                            for (NewsGroupEntry item : results) {
-                                items.add(item);
-                            }
-                            adapter.notifyDataSetChanged();
-                        }
-                    });
-                } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-                    createAndShowDialogFromTask(e, "Error");
-                }
-
-                return null;
-            }
-        };
-
-        runAsyncTask(task);
-    }
+    }*/
 
     private void createAndShowDialogFromTask(final Exception exception, String title) {
         runOnUiThread(new Runnable() {

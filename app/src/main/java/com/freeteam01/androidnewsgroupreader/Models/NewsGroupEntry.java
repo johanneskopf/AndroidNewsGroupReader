@@ -5,11 +5,11 @@ import java.util.Objects;
 public class NewsGroupEntry {
 
     private String id;
-    private long articleCount = 0;
+    private int articleCount = 0;
     private String name = null;
     private boolean selected = false;
 
-    public NewsGroupEntry(long articleCount, String name, boolean selected) {
+    public NewsGroupEntry(int articleCount, String name, boolean selected) {
         super();
         this.articleCount = articleCount;
         this.name = name;
@@ -20,11 +20,11 @@ public class NewsGroupEntry {
         return id;
     }
 
-    public long getArticleCount() {
+    public int getArticleCount() {
         return articleCount;
     }
 
-    public void setArticleCount(long articleCount) {
+    public void setArticleCount(int articleCount) {
         this.articleCount = articleCount;
     }
 
@@ -51,5 +51,9 @@ public class NewsGroupEntry {
         result = 31 * result + Objects.hashCode(this.name);
         return result;*/
         return Objects.hashCode(this.name);
+    }
+
+    public String toString() {
+        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.selected + "'"+ "', id: '" + this.id + "'";
     }
 }

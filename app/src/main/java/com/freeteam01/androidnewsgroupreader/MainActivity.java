@@ -22,15 +22,15 @@ import android.widget.TextView;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AzureServiceEvent {
 
     private static final int REQUEST_INTERNET = 0;
-    private List<String> subscribed_newsgroups_;
 
     Spinner subscribed_newsgroups_spinner_;
     SubscribedNGSpinnerAdapter spinner_adapter_;
@@ -40,6 +40,27 @@ public class MainActivity extends AppCompatActivity {
 
     ListView post_list_view_;
     PostViewAdapter post_view_adapter_;
+
+    @Override
+    public void onStart(){
+        super.onStart();
+
+        // refresh shown data
+/*        spinner_adapter_.clear();*/
+/*        if(subscribed_newsgroups_ != null)
+        {
+            spinner_adapter_.addAll(subscribed_newsgroups_);
+            spinner_adapter_.notifyDataSetChanged();
+        }*/
+
+        /*if (AzureService.getInstance().isAzureServiceEventFired()) {
+            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+        }*/ /*else {
+            AzureService.getInstance().addAzureServiceEventListener(this);
+            Log.d("AzureService", "MainActivity subscribed to AzureEvent");
+        }*/
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,19 +73,15 @@ public class MainActivity extends AppCompatActivity {
 
         if(!AzureService.isInitialized())
             AzureService.Initialize(this);
-        subscribed_newsgroups_ = AzureService.getInstance().getSubscribedNewsgroupsTestData();
 
         subscribed_newsgroups_spinner_ = (Spinner) findViewById(R.id.newsgroups_spinner);
         spinner_adapter_ = new SubscribedNGSpinnerAdapter(this, new ArrayList<String>());
         spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         subscribed_newsgroups_spinner_.setAdapter(spinner_adapter_);
-        spinner_adapter_.addAll(subscribed_newsgroups_);
-        spinner_adapter_.notifyDataSetChanged();
 
         post_list_view_ = (ListView) findViewById(R.id.treeList);
         post_view_adapter_ = new PostViewAdapter(this, new ArrayList<String>());
         post_list_view_.setAdapter(post_view_adapter_);
-
 
         subscribed_newsgroups_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -78,14 +95,58 @@ public class MainActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parentView) {
                 selected_newsgroup_ = null;
             }
-
         });
 
+        AzureService.getInstance().addAzureServiceEventListener(this);
+        Log.d("AzureService", "MainActivity subscribed to AzureEvent");
+        if (AzureService.getInstance().isAzureServiceEventFired()) {
+            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+        }
+    }
+
+    @Override
+    public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
+        showSubscripedNewsgroups(getSubscribedNewsgroups(newsGroupEntries));
+    }
+
+    public ArrayList<String> getSubscribedNewsgroups(List<NewsGroupEntry> newsGroupEntries) {
+        ArrayList<String> data = new ArrayList<>();
+        for (NewsGroupEntry newsGroupEntry : newsGroupEntries) {
+            if (newsGroupEntry.isSelected())
+                data.add(newsGroupEntry.getName());
+        }
+        return data;
+    }
+
+    private void showSubscripedNewsgroups(final List<String> subscribedNewsGroupEntries) {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                           String prev = selected_newsgroup_;
+
+                            spinner_adapter_.clear();
+                            spinner_adapter_.addAll(subscribedNewsGroupEntries);
+                            spinner_adapter_.notifyDataSetChanged();
+
+/*                            if(!prev.equals(selected_newsgroup_)){
+                                LoadSubscribedNewsGroupsArticles loader = new LoadSubscribedNewsGroupsArticles();
+                                loader.execute();
+                            }*/
+                        }
+                    });
+                return null;
+            }
+        };
+
+        runAsyncTask(task);
     }
 
     private void permissionCheck() {
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -187,5 +248,9 @@ public class MainActivity extends AppCompatActivity {
 
             return convertView;
         }
+    }
+
+    private AsyncTask<Void, Void, Void> runAsyncTask(AsyncTask<Void, Void, Void> task) {
+        return task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 }

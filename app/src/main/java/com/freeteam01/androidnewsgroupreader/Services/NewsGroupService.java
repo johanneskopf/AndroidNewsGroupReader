@@ -37,9 +37,17 @@ public class NewsGroupService {
 
         List<NewsGroupEntry> newsgroupEntries = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupEntries.add(new NewsGroupEntry(info.getArticleCountLong(), info.getNewsgroup(), false));
+            newsgroupEntries.add(new NewsGroupEntry(safeLongToInt(info.getArticleCountLong()), info.getNewsgroup(), false));
         }
         return newsgroupEntries;
+    }
+
+    public static int safeLongToInt(long l) {
+        if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException
+                    (l + " cannot be cast to int without changing its value.");
+        }
+        return (int) l;
     }
 
     public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
@@ -58,10 +66,12 @@ public class NewsGroupService {
             articlesByDepth.get(references).add(article);
         }
 
-        for (Article article : articlesByDepth.get(0)) {
-            articles.put(article.getArticleId(), new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
-        }
-        articlesByDepth.remove(0);
+       if(articlesByDepth.size() > 0) {
+           for (Article article : articlesByDepth.get(0)) {
+               articles.put(article.getArticleId(), new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
+           }
+           articlesByDepth.remove(0);
+       }
 
         for (List<Article> articleList : articlesByDepth.values()) {
             for (Article article : articleList) {
