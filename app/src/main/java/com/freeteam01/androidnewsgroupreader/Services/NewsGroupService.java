@@ -44,7 +44,7 @@ public class NewsGroupService {
 
         List<NewsGroupEntry> newsgroupEntries = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupEntries.add(new NewsGroupEntry(server, safeLongToInt(info.getArticleCountLong()), info.getNewsgroup(), false));
+            newsgroupEntries.add(new NewsGroupEntry(server, safeLongToInt(info.getArticleCountLong()), info.getNewsgroup()));
         }
         return newsgroupEntries;
     }
@@ -57,9 +57,9 @@ public class NewsGroupService {
         return (int) l;
     }
 
-    public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
+    public List<NewsGroupArticle> getAllArticlesFromNewsgroup(NewsGroupEntry newsgroup) throws IOException {
         NewsgroupInfo group = new NewsgroupInfo();
-        client.selectNewsgroup(newsgroup, group);
+        client.selectNewsgroup(newsgroup.getName(), group);
         long first = group.getFirstArticleLong();
         long last = group.getLastArticleLong();
         HashMap<String, NewsGroupArticle> articles = new HashMap<>();
@@ -75,14 +75,14 @@ public class NewsGroupService {
 
        if(articlesByDepth.size() > 0) {
            for (Article article : articlesByDepth.get(0)) {
-               articles.put(article.getArticleId(), new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
+               articles.put(article.getArticleId(), new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
            }
            articlesByDepth.remove(0);
        }
 
         for (List<Article> articleList : articlesByDepth.values()) {
             for (Article article : articleList) {
-                NewsGroupArticle ngArticle = new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
+                NewsGroupArticle ngArticle = new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
                 ngArticle.addReferences(article.getReferences());
                 NewsGroupArticle root = articles.get(ngArticle.getReferences().get(0));
                 if(root == null)

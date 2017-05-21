@@ -5,38 +5,33 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.BaseAdapter;
-import android.widget.Button;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.freeteam01.androidnewsgroupreader.Adapter.NewsgroupServerSpinnerAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
-import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
-import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
+import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class SubscribeActivity extends AppCompatActivity implements AzureServiceEvent {
     private NewsGroupAdapter adapter;
-    private List<NewsGroupEntry> items;
+    private Spinner server_spinner;
+    private String server;
+    private ArrayList<NewsGroupEntry> items;
     private List<NewsGroupEntry> changedItems;
+    private NewsgroupServerSpinnerAdapter server_spinner_adapter_;
 
     @Override
     public void onStart() {
@@ -64,6 +59,25 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         adapter = new NewsGroupAdapter(this, items); //R.layout.entry_info
         listView.setAdapter(adapter);
 
+        server_spinner = (Spinner) findViewById(R.id.spin_server);
+        server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
+        server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        server_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                server = server_spinner.getItemAtPosition(position).toString();
+                showNewsgroups();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                server = null;
+                showNewsgroups();
+            }
+        });
+        server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
+        server_spinner.setAdapter(server_spinner_adapter_);
+
 //        checkSaveButtonClick();
 
         listView.setOnItemClickListener(new OnItemClickListener() {
@@ -78,7 +92,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
 //                        "Clicked on Row: " + entry.getName(),
 //                        Toast.LENGTH_SHORT).show();
 
-                entry.setSelected(!entry.isSelected());
+                entry.setSubscribed(!entry.isSubscribed());
                 adapter.notifyDataSetChanged();
                 if (!changedItems.contains(entry))
                     changedItems.add(entry);
@@ -88,15 +102,15 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         // TODO Hint: MobileServiceSyncTable.java  tells you which functions are performing
         // TODO             local operations, and which remote operations
 
-//        showLocalNewsgroups();
+        showNewsgroups();
 //        showEntriesFromTestData();
 
-        AzureService.getInstance().addAzureServiceEventListener(this);
-        Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
-        if (AzureService.getInstance().isAzureServiceEventFired()) {
-            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-            Log.d("AzureService", "SubscribeActivity loaded entries as AzureEvent was already fired");
-        }
+//        AzureService.getInstance().addAzureServiceEventListener(this);
+//        Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
+//        if (AzureService.getInstance().isAzureServiceEventFired()) {
+//            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+//            Log.d("AzureService", "SubscribeActivity loaded entries as AzureEvent was already fired");
+//        }
     }
 
     @Override
@@ -107,10 +121,10 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
 //                AzureService.getInstance().setNewsGroupEntries(items);
 /*                for (NewsGroupEntry newsGroupEntry:changedItems) {
                     NewsGroupEntry reset = getEntryWithName(items, newsGroupEntry.getName());
-                    reset.setSelected(!newsGroupEntry.isSelected());
+                    reset.setSelected(!newsGroupEntry.isSubscribed());
                 }*/
 //                AzureService.getInstance().setSelectedNewsGroupEntries(changedItems);
-                AzureService.getInstance().persistSelectedNewsGroupEntries(changedItems);
+//                AzureService.getInstance().persistSelectedNewsGroupEntries(changedItems);
 
                 return true;
             default:
@@ -120,114 +134,23 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
 
     @Override
     public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
-        showNewsgroups(newsGroupEntries);
     }
 
-    private void showNewsgroups(final List<NewsGroupEntry> newsGroupEntries) {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+    private void showNewsgroups() {
+        adapter.clear();
+        if (server != null) {
+            adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
+        }
+        adapter.notifyDataSetChanged();
+    }
+
+    private void createAndShowDialogFromTask(final Exception exception, String title) {
+        runOnUiThread(new Runnable() {
             @Override
-            protected Void doInBackground(Void... params) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        items.clear();
-                        for (NewsGroupEntry item : newsGroupEntries) {
-                            items.add(item);
-                        }
-                        adapter.notifyDataSetChanged();
-                    }
-                });
-                return null;
+            public void run() {
+                createAndShowDialog(exception, "Error");
             }
-        };
-
-        runAsyncTask(task);
-    }
-
-    private class NewsGroupAdapter extends BaseAdapter {
-
-        private Context context;
-        private int layoutResourceId;
-        private List<NewsGroupEntry> list;
-        private LayoutInflater layoutInflater = null;
-
-        public NewsGroupAdapter(Context context, List<NewsGroupEntry> list) {
-            this.context = context;
-            this.list = list;
-            layoutInflater = (LayoutInflater) context
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        }
-
-        private class ViewHolder {
-            public TextView entries;
-            public CheckBox name;
-
-            public ViewHolder(View base) {
-                entries = (TextView) base.findViewById(R.id.entries);
-                name = (CheckBox) base.findViewById(R.id.checkBox1);
-            }
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View row = convertView;
-            ViewHolder holder;
-            if (row == null) {
-                LayoutInflater li = (LayoutInflater) context
-                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                row = li.inflate(R.layout.entry_info, null);
-                holder = new ViewHolder(row);
-
-                /*holder.entries.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                        CheckBox cb = (CheckBox) v;
-                        NewsGroupEntry entry = (NewsGroupEntry) cb.getTag();
-                        Toast.makeText(getApplicationContext(),
-                                "Clicked on Checkbox: " + cb.getText() + " is " + cb.isChecked(),
-                                Toast.LENGTH_SHORT).show();
-                        entry.setSelected(cb.isChecked());
-                    }
-                });*/
-
-                holder.name.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                        CheckBox cb = (CheckBox) v;
-                        NewsGroupEntry entry = (NewsGroupEntry) cb.getTag();
-//                        Toast.makeText(getApplicationContext(),
-//                                "Clicked on Checkbox: " + cb.getText() + " is " + cb.isChecked(),
-//                                Toast.LENGTH_SHORT).show();
-                        entry.setSelected(cb.isChecked());
-                        if (!changedItems.contains(entry))
-                            changedItems.add(entry);
-                    }
-                });
-
-                row.setTag(holder);
-            } else {
-                holder = (ViewHolder) row.getTag();
-            }
-            NewsGroupEntry entry = list.get(position); //getItem(position);
-            holder.entries.setText(" (" + entry.getArticleCount() + ")");
-            holder.name.setText(entry.getName());
-            holder.name.setChecked(entry.isSelected());
-            holder.name.setTag(entry);
-            return row;
-        }
-
-        @Override
-        public int getCount() {
-            return list != null ? list.size() : 0;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return list != null ? list.get(position) : null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
+        });
     }
 
     /*private void checkSaveButtonClick() {
@@ -250,15 +173,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         });
     }*/
 
-    private void createAndShowDialogFromTask(final Exception exception, String title) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createAndShowDialog(exception, "Error");
-            }
-        });
-    }
-
     private void createAndShowDialog(Exception exception, String title) {
         Throwable ex = exception;
         if (exception.getCause() != null) {
@@ -275,7 +189,52 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         builder.create().show();
     }
 
-    private AsyncTask<Void, Void, Void> runAsyncTask(AsyncTask<Void, Void, Void> task) {
-        return task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+    private class NewsGroupAdapter extends ArrayAdapter<NewsGroupEntry> {
+
+
+        public NewsGroupAdapter(Context context, ArrayList<NewsGroupEntry> list) {
+            super(context, 0, list);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View row = convertView;
+            ViewHolder holder;
+            if (row == null) {
+                row = LayoutInflater.from(getContext()).inflate(R.layout.entry_info, parent, false);
+                holder = new ViewHolder(row);
+
+                holder.name.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        CheckBox cb = (CheckBox) v;
+                        NewsGroupEntry entry = (NewsGroupEntry) cb.getTag();
+                        entry.setSubscribed(cb.isChecked());
+                        if (!changedItems.contains(entry))
+                            changedItems.add(entry);
+                    }
+                });
+
+                row.setTag(holder);
+            } else {
+                holder = (ViewHolder) row.getTag();
+            }
+            NewsGroupEntry entry = getItem(position); //getItem(position);
+            holder.entries.setText(" (" + entry.getArticleCount() + ")");
+            holder.name.setText(entry.getName());
+            holder.name.setChecked(entry.isSubscribed());
+            holder.name.setTag(entry);
+            return row;
+        }
+
+        private class ViewHolder {
+            public TextView entries;
+            public CheckBox name;
+
+            public ViewHolder(View base) {
+                entries = (TextView) base.findViewById(R.id.entries);
+                name = (CheckBox) base.findViewById(R.id.cb_subscribe);
+            }
+        }
     }
 }

@@ -249,7 +249,7 @@ public class AzureService {
 /*    public ArrayList<String> getSubscribedNewsgroups() {
         ArrayList<String> data = new ArrayList<>();
         for (NewsGroupEntry newsGroupEntry : newsGroupEntries) {
-            if (newsGroupEntry.isSelected())
+            if (newsGroupEntry.isSubscribed())
                 data.add(newsGroupEntry.getName());
         }
         return data;
@@ -358,7 +358,7 @@ public class AzureService {
     public void setSelectedNewsGroupEntries(List<NewsGroupEntry> selectedNewsGroupEntries) {
         for (NewsGroupEntry changedGroupEntry : selectedNewsGroupEntries) {
             NewsGroupEntry set = newsGroupEntries.get(newsGroupEntries.indexOf(changedGroupEntry));
-            set.setSelected(changedGroupEntry.isSelected());
+            set.setSubscribed(changedGroupEntry.isSubscribed());
         }
     }
 
@@ -370,7 +370,7 @@ public class AzureService {
                     for (NewsGroupEntry changedEntry : selectedNewsGroupEntries) {
                         Log.d("AzureService", "Persisting NewsGroupEntry: " + changedEntry);
                         NewsGroupEntry set = newsGroupEntries.get(newsGroupEntries.indexOf(changedEntry));
-                        set.setSelected(changedEntry.isSelected());
+                        set.setSubscribed(changedEntry.isSubscribed());
                         updateItemInTable(changedEntry);
                         Log.d("AzureService", "Persisted NewsGroupEntry: " + set);
                     }
@@ -410,33 +410,5 @@ public class AzureService {
             }
         }
         return null;
-    }
-
-    private void showEntriesFromTestData() {
-
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    newsGroupEntries.clear();
-//                    newsGroupEntries.add(new NewsGroupEntry(0, "tu-graz.algo", false));
-//                    newsGroupEntries.add(new NewsGroupEntry(1, "tu-graz.datenbanken", true));
-//                    newsGroupEntries.add(new NewsGroupEntry(2, "tu-graz.diverses", false));
-//                    newsGroupEntries.add(new NewsGroupEntry(3, "tu-graz.skripten", true));
-//                    newsGroupEntries.add(new NewsGroupEntry(4, "tu-graz.telekom", true));
-//                    newsGroupEntries.add(new NewsGroupEntry(5, "tu-graz.veranstaltungen", false));
-//                    newsGroupEntries.add(new NewsGroupEntry(6, "tu-graz.wohnungsmarkt", false));
-
-                    fireAzureServiceEvent(newsGroupEntries);
-                } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-                }
-
-                return null;
-            }
-        };
-
-        runAsyncTask(task);
     }
 }

@@ -13,16 +13,14 @@ public class NewsGroupEntry {
     private String id;
     private int articleCount = 0;
     private String name = null;
-    private boolean selected = false;
     private boolean subscribed_ = false;
-    private NewsGroupServer parent_ = null;
+    private NewsGroupServer server_ = null;
 
-    public NewsGroupEntry(NewsGroupServer server, int articleCount, String name, boolean selected) {
+    public NewsGroupEntry(NewsGroupServer server, int articleCount, String name) {
         super();
-        this.parent_ = server;
+        this.server_ = server;
         this.articleCount = articleCount;
         this.name = name;
-        this.selected = selected;
     }
 
     public String getId() {
@@ -45,12 +43,8 @@ public class NewsGroupEntry {
         this.name = name;
     }
 
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected = selected;
+    public boolean isSubscribed() {
+        return subscribed_;
     }
 
     @Override
@@ -59,7 +53,7 @@ public class NewsGroupEntry {
     }
 
     public String toString() {
-        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.selected + "'" + "', id: '" + this.id + "'";
+        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.subscribed_+ "'" + "', id: '" + this.id + "'";
     }
 
     public void setSubscribed(boolean subscribed) {
@@ -67,9 +61,9 @@ public class NewsGroupEntry {
     }
 
     public void loadArticles() throws IOException {
-        NewsGroupService service = new NewsGroupService(parent_);
+        NewsGroupService service = new NewsGroupService(server_);
         service.Connect();
-        for (NewsGroupArticle article : service.getAllArticlesFromNewsgroup(getName())) {
+        for (NewsGroupArticle article : service.getAllArticlesFromNewsgroup(this)) {
             if (!articles_.containsKey(article.getArticleID())) {
                 articles_.put(article.getArticleID(), article);
             } else {
@@ -81,5 +75,25 @@ public class NewsGroupEntry {
 
     public Collection<NewsGroupArticle> getArticles() {
         return articles_.values();
+    }
+
+    public NewsGroupServer getServer() {
+        return server_;
+    }
+
+    public NewsGroupArticle getArticle(String article) {
+        NewsGroupArticle newsGroupArticle = articles_.get(article);
+        if (newsGroupArticle == null) {
+            for (HashMap.Entry<String, NewsGroupArticle> ng : articles_.entrySet()) {
+                newsGroupArticle = ng.getValue().getSubArticel(article);
+                if(newsGroupArticle != null)
+                    break;
+//                if (ng.getValue().getSubArticel(articel).getChildren().containsKey(article)) {
+//                    newsGroupArticle = ng.getValue().getChildren().get(article);
+//                    break;
+//                }
+            }
+        }
+        return newsGroupArticle;
     }
 }

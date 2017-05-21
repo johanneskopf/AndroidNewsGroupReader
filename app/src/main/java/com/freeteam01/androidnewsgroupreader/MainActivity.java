@@ -16,23 +16,26 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.freeteam01.androidnewsgroupreader.Adapter.NewsgroupServerSpinnerAdapter;
 import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
-import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
+import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
-import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class MainActivity extends AppCompatActivity implements AzureServiceEvent {
+public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity {
 
     private static final int REQUEST_INTERNET = 0;
 
@@ -40,12 +43,12 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     Spinner newsgroupsserver_spinner_;
     NewsGroupSubscribedSpinnerAdapter subscribed_spinner_adapter_;
     NewsgroupServerSpinnerAdapter server_spinner_adapter_;
-    List<NewsGroupArticle> articles_ = new ArrayList<>();
     ListView post_list_view_;
     PostViewAdapter post_view_adapter_;
-    private List<String> subscribed_newsgroups_;
+    ProgressBar progressBar_;
     private String selected_newsgroup_;
     private String selected_server_;
+    private AtomicInteger background_jobs_count = new AtomicInteger();
 
     @Override
     public void onStart() {
@@ -83,19 +86,20 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
         server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         newsgroupsserver_spinner_.setAdapter(server_spinner_adapter_);
+        progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
         showNewsgroupServers();
 
         newsgroupsserver_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selected_server_ = newsgroupsserver_spinner_.getItemAtPosition(position).toString();
-                showSubscripedNewsgroups();
+                ShowSubscribedNewsgroups();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 selected_server_ = null;
-                showSubscripedNewsgroups();
+                ShowSubscribedNewsgroups();
             }
         });
 
@@ -133,9 +137,10 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     private void showNewGroupArticles() {
         final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
-        AsyncTask<NewsGroupServer, Void, Void> task = new AsyncTask<NewsGroupServer, Void, Void>() {
+        AsyncTask<NewsGroupServer, Void, Void> task = new SpinnerAsyncTask<NewsGroupServer, Void, Void>(this) {
             @Override
             protected Void doInBackground(NewsGroupServer... params) {
+                super.doInBackground(params);
                 for (NewsGroupServer server : params) {
                     try {
                         server.reload();
@@ -160,47 +165,23 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     }
 
     private void showNewsgroupServers() {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        server_spinner_adapter_.clear();
-                        server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
-                        server_spinner_adapter_.notifyDataSetChanged();
-                    }
-                });
-                return null;
-            }
-        };
-        task.execute();
+        server_spinner_adapter_.clear();
+        server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
+        server_spinner_adapter_.notifyDataSetChanged();
     }
 
     @Override
     public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
-        showSubscripedNewsgroups();
+        ShowSubscribedNewsgroups();
     }
 
 
-    private void showSubscripedNewsgroups() {
+    private void ShowSubscribedNewsgroups() {
         NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
         final List<String> subscribedNewsGroupEntries = server.getSubscribed();
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        subscribed_spinner_adapter_.clear();
-                        subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
-                        subscribed_spinner_adapter_.notifyDataSetChanged();
-                    }
-                });
-                return null;
-            }
-        };
-        task.execute();
+        subscribed_spinner_adapter_.clear();
+        subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
+        subscribed_spinner_adapter_.notifyDataSetChanged();
     }
 
 
@@ -225,6 +206,30 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         }
     }
 
+    @Override
+    public void addedBackgroundJob() {
+        background_jobs_count.getAndIncrement();
+        setSpinnerVisibility();
+    }
+
+    @Override
+    public void finishedBackgroundJob() {
+        background_jobs_count.getAndDecrement();
+        setSpinnerVisibility();
+    }
+
+    void setSpinnerVisibility() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (background_jobs_count.get() == 0) {
+                    progressBar_.setVisibility(View.GONE);
+                } else {
+                    progressBar_.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
 
     public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
         public NewsGroupSubscribedSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
@@ -245,22 +250,4 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         }
     }
 
-    public class NewsgroupServerSpinnerAdapter extends ArrayAdapter<String> {
-        public NewsgroupServerSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
-            super(context, 0, newsgroups);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            String newsgroup = getItem(position);
-
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.newsgroup_post_listview, parent, false);
-            }
-
-            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
-            tv_name.setText(newsgroup);
-            return convertView;
-        }
-    }
 }

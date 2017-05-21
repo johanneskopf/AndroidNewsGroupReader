@@ -1,14 +1,12 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
 
-import android.os.AsyncTask;
-
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -90,5 +88,9 @@ public class NewsGroupServer
 
     public String getName() {
         return name_;
+    }
+
+    public Collection getAllNewsgroups() {
+        return newsgroups_.values();
     }
 }

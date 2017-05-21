@@ -13,7 +13,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.freeteam01.androidnewsgroupreader.MainActivity;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.PostActivity;
 import com.freeteam01.androidnewsgroupreader.R;
@@ -42,7 +41,7 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> {
 
         TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
         tv_name.setText(newsgroup_article.getSubjectString());
-        if (!newsgroup_article.getIsread()) {
+        if (!newsgroup_article.getRead()) {
             tv_name.setTypeface(null, Typeface.BOLD);
         } else if (newsgroup_article.hasUnreadChildren()) {
             tv_name.setTypeface(null, Typeface.ITALIC);
@@ -55,9 +54,11 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent launch = new Intent(mainActivity, PostActivity.class);
                 NewsGroupArticle selected = getItem(position);
-                selected.setIsread(true);
+                selected.setRead(true);
                 Bundle b = new Bundle();
-                b.putParcelable("article", selected);
+                b.putString("server", selected.getGroup().getServer().getName());
+                b.putString("group", selected.getGroup().getName());
+                b.putString("article", selected.getArticleID());
                 launch.putExtras(b);
                 adapter.notifyDataSetChanged();
                 mainActivity.startActivityForResult(launch, 0);

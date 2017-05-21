@@ -1,51 +1,35 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
-public class NewsGroupArticle implements Parcelable {
-    public static final Parcelable.Creator<NewsGroupArticle> CREATOR = new Parcelable.Creator<NewsGroupArticle>() {
-        public NewsGroupArticle createFromParcel(Parcel in) {
-            return new NewsGroupArticle(in);
-        }
-
-        public NewsGroupArticle[] newArray(int size) {
-            return new NewsGroupArticle[size];
-        }
-    };
+public class NewsGroupArticle {
     private String id;
     private String articleID;
     private String subject;
     private String date;
     private String from;
-    private boolean isread;
+    private NewsGroupEntry group;
+    private String text;
+    private boolean isRead;
     private transient List<String> references = new ArrayList<>();
     private transient HashMap<String, NewsGroupArticle> children = new HashMap<>();
 
-    public NewsGroupArticle(String articleId, String subject, String date, String from) {
+    public NewsGroupArticle(NewsGroupEntry group, String articleId, String subject, String date, String from) {
         this.articleID = articleId;
+        this.group = group;
         this.subject = subject;
         this.date = date;
         this.from = from;
-        this.isread = false;
-    }
-
-    public NewsGroupArticle(Parcel in) {
-        in.readList(this.references, null);
-        this.children = in.readHashMap(NewsGroupArticle.class.getClassLoader());
-        this.articleID = in.readString();
-        this.subject = in.readString();
-        this.date = in.readString();
-        this.from = in.readString();
+        this.isRead = false;
     }
 
     public String getId() {
@@ -91,20 +75,19 @@ public class NewsGroupArticle implements Parcelable {
         return date;
     }
 
-    public boolean getIsread() {
-        return isread;
+    public boolean getRead() {
+        return isRead;
     }
 
-    public void setIsread(boolean isread) {
-        this.isread = isread;
+    public void setRead(boolean read) {
+        this.isRead = read;
     }
 
     public boolean hasUnreadChildren() {
         for (Map.Entry<String, NewsGroupArticle> article :
                 getChildren().entrySet()) {
-            if(!article.getValue().getIsread() || article.getValue().hasUnreadChildren())
-            {
-              return true;
+            if (!article.getValue().getRead() || article.getValue().hasUnreadChildren()) {
+                return true;
             }
         }
         return false;
@@ -145,23 +128,36 @@ public class NewsGroupArticle implements Parcelable {
         }
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    public String getText() throws IOException {
+        if (text == null) {
+            assert (group != null);
+            NewsGroupService service = new NewsGroupService(group.getServer());
+            try {
+                service.Connect();
+                text = service.getArticleText(getArticleID());
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                service.Disconnect();
+            }
+        }
+        return text;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeList(references);
-        dest.writeMap(children);
-        dest.writeString(articleID);
-        dest.writeString(subject);
-        dest.writeString(date);
-        dest.writeString(from);
+    public NewsGroupEntry getGroup() {
+        return group;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(this.articleID);
+    public NewsGroupArticle getSubArticel(String article) {
+        NewsGroupArticle ng_article = children.get(article);
+        if (ng_article == null) {
+            for (NewsGroupArticle ng : children.values()) {
+                ng_article = ng.getSubArticel(article);
+                if (ng_article != null) {
+                    break;
+                }
+            }
+        }
+        return ng_article;
     }
 }
