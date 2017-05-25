@@ -74,6 +74,10 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent launch = new Intent(MainActivity.this, LoginActivity.class);
+        startActivityForResult(launch, 0);
+
         setContentView(R.layout.activity_main);
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
