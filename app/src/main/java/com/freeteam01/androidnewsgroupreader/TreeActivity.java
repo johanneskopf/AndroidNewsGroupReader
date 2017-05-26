@@ -71,7 +71,7 @@ public class TreeActivity extends AppCompatActivity{
         protected ArrayList<String> doInBackground(Void... params) {
             ArrayList<String> article_names = new ArrayList<>();
             try {
-                NewsGroupService service = new NewsGroupService();
+                NewsGroupService service = new NewsGroupService(null);
                 service.Connect();
                 service.Disconnect();
             } catch (Exception e) {
@@ -127,7 +127,7 @@ public class TreeActivity extends AppCompatActivity{
                     for (Map.Entry<String, NewsGroupArticle> entry: article_.getChildren().entrySet())
                     {
                         if(entry.getValue().getSubjectString().equals(getItem(position))) {
-                            b.putParcelable("article", entry.getValue());
+//                            b.putParcelable("article", entry.getValue());
                             launch.putExtras(b);
                         }
                     }

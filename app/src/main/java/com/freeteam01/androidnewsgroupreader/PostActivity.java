@@ -1,7 +1,6 @@
 package com.freeteam01.androidnewsgroupreader;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -22,132 +21,132 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ScrollView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
+import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
+import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
+import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by christian on 08.05.17.
- */
 
-public class PostActivity extends AppCompatActivity {
+public class PostActivity extends AppCompatActivity implements ISpinnableActivity {
 
-    private NewsGroupArticle article_;
     PostViewAdapter tree_view_adapter_;
-
     TextView article_text_text_view_;
-
     ListView tree_list_view_;
     List<NewsGroupArticle> articles_ = new ArrayList<>();
-
     List<NewsGroupArticle> flat_ = new ArrayList<>();
-
+    private NewsGroupArticle article_;
     private EditText et_answer_;
+    private AtomicInteger background_jobs_count = new AtomicInteger();
+    private ProgressBar progressBar_;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post);
 
         Bundle bundle = getIntent().getExtras();
-        article_ = bundle.getParcelable("article");
+        String server = bundle.getString("server");
+        String group = bundle.getString("group");
+        String article = bundle.getString("article");
+
+        article_ = RuntimeStorage.instance().getNewsgroupServer(server).getNewsgroup(group).getArticle(article);
+
         articles_ = new ArrayList<>(article_.getChildren().values());
 
         tree_list_view_ = (ListView) findViewById(R.id.tree_view);
-        tree_view_adapter_ = new PostViewAdapter(this, new ArrayList<String>());
+        tree_view_adapter_ = new PostViewAdapter(this, tree_list_view_, this, new ArrayList<NewsGroupArticle>());
         tree_list_view_.setAdapter(tree_view_adapter_);
 
         article_text_text_view_ = (TextView) findViewById(R.id.tv_article);
+        progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
         article_text_text_view_.setMovementMethod(new ScrollingMovementMethod());
 
-        LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText();
+        LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText(this);
         loader.execute();
 
         tree_view_adapter_.clear();
         flat_.add(article_);
-        tree_view_adapter_.add(article_.getSubjectString());
+        tree_view_adapter_.add(article_);
         List<NewsGroupArticle> set_list = new ArrayList<>(article_.getChildren().values());
         setTreeElements(set_list, 1);
         tree_view_adapter_.notifyDataSetChanged();
 
-        //et_answer_.setCustomSelectionActionModeCallback(new StyleCallback());
+//        et_answer_.setCustomSelectionActionModeCallback(new StyleCallback());
     }
 
-    public void setTreeElements(List<NewsGroupArticle> articles, int depth){
+    public void setTreeElements(List<NewsGroupArticle> articles, int depth) {
         for (NewsGroupArticle article : articles) {
             flat_.add(article);
-            tree_view_adapter_.add(addNTimes(" ", depth) + article.getSubjectString());
-            if(article.getChildren().values().size() > 0) {
+            tree_view_adapter_.add(article);
+//            tree_view_adapter_.add(addNTimes(" ", depth) + article.getSubjectString());
+            if (article.getChildren().values().size() > 0) {
                 List<NewsGroupArticle> set_list = new ArrayList<>(article.getChildren().values());
                 setTreeElements(set_list, depth + 1);
             }
         }
     }
 
-    public String addNTimes(String s, int n){
+    public String addNTimes(String s, int n) {
         String ret = new String();
-        for(int i = 0; i < n; i++)
+        for (int i = 0; i < n; i++)
             ret += s;
         return ret;
     }
 
-    public class PostViewAdapter extends ArrayAdapter<String> {
-        public PostViewAdapter(Context context, ArrayList<String> newsgroups) {
-            super(context, 0, newsgroups);
-        }
-
-        @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            String newsgroup_article = getItem(position);
-
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.post, parent, false);
-            }
-
-            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
-            tv_name.setText(newsgroup_article);
-
-            tree_list_view_.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Log.d("TREEVIE", "item clicked");
-                    for(NewsGroupArticle article: articles_){
-                        if(flat_.get(position) != null){
-                            article_ = flat_.get(position);
-                        }
-                    }
-
-                    LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText();
-                    loader.execute();
-                }
-            });
-
-            return convertView;
-        }
+    @Override
+    public void addedBackgroundJob() {
+        background_jobs_count.getAndIncrement();
+        setSpinnerVisibility();
     }
 
-    private class LoadNewsGroupsArticleText extends AsyncTask<Void, Void, ArrayList<String>> {
+    @Override
+    public void finishedBackgroundJob() {
+        background_jobs_count.getAndDecrement();
+        setSpinnerVisibility();
+    }
+
+    void setSpinnerVisibility() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (background_jobs_count.get() == 0) {
+                    progressBar_.setVisibility(View.GONE);
+                } else {
+                    progressBar_.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    private class LoadNewsGroupsArticleText extends SpinnerAsyncTask<Void, Void, String> {
+
+        public LoadNewsGroupsArticleText(ISpinnableActivity activity) {
+            super(activity);
+        }
+
         @Override
-        protected ArrayList<String> doInBackground(Void... params) {
-            ArrayList<String> article_text = new ArrayList<>();
+        protected String doInBackground(Void... params) {
+            super.doInBackground(params);
+            String article_text = null;
             try {
-                NewsGroupService service = new NewsGroupService();
-                service.Connect();
-                if(article_.getArticleID() != null)
-                    article_text.add(service.getArticleText(article_.getArticleID()));
-                service.Disconnect();
+                article_text = article_.getText();
             } catch (Exception e) {
-                Log.e("LOAD_TEXT",Log.getStackTraceString(e));
+                Log.e("LOAD_TEXT", Log.getStackTraceString(e));
             }
             return article_text;
         }
 
-        protected void onPostExecute(ArrayList<String> article_text) {
-            article_text_text_view_.setText(article_text.get(0));
+        protected void onPostExecute(String article_text) {
+            super.onPostExecute(article_text);
+            article_text_text_view_.setText(article_text);
         }
     }
 
@@ -176,8 +175,7 @@ public class PostActivity extends AppCompatActivity {
                 return false;
             }
             SpannableStringBuilder ssb = new SpannableStringBuilder(et_answer_.getText());
-            for(StyleSpan s : ssb.getSpans(start, end, StyleSpan.class))
-            {
+            for (StyleSpan s : ssb.getSpans(start, end, StyleSpan.class)) {
                 ssb.removeSpan(s);
             }
 

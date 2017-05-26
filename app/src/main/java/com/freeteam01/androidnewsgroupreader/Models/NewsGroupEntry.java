@@ -1,19 +1,26 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class NewsGroupEntry {
 
+    HashMap<String, NewsGroupArticle> articles_ = new HashMap<>();
     private String id;
     private int articleCount = 0;
     private String name = null;
-    private boolean selected = false;
+    private boolean subscribed_ = false;
+    private NewsGroupServer server_ = null;
 
-    public NewsGroupEntry(int articleCount, String name, boolean selected) {
+    public NewsGroupEntry(NewsGroupServer server, int articleCount, String name) {
         super();
+        this.server_ = server;
         this.articleCount = articleCount;
         this.name = name;
-        this.selected = selected;
     }
 
     public String getId() {
@@ -36,24 +43,57 @@ public class NewsGroupEntry {
         this.name = name;
     }
 
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected = selected;
+    public boolean isSubscribed() {
+        return subscribed_;
     }
 
     @Override
     public int hashCode() {
-        /*int result = 17;
-        result = 31 * result + (int)articleCount;
-        result = 31 * result + Objects.hashCode(this.name);
-        return result;*/
         return Objects.hashCode(this.name);
     }
 
     public String toString() {
-        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.selected + "'"+ "', id: '" + this.id + "'";
+        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.subscribed_+ "'" + "', id: '" + this.id + "'";
+    }
+
+    public void setSubscribed(boolean subscribed) {
+        this.subscribed_ = subscribed;
+    }
+
+    public void loadArticles() throws IOException {
+        NewsGroupService service = new NewsGroupService(server_);
+        service.Connect();
+        for (NewsGroupArticle article : service.getAllArticlesFromNewsgroup(this)) {
+            if (!articles_.containsKey(article.getArticleID())) {
+                articles_.put(article.getArticleID(), article);
+            } else {
+                //TODO Update logic
+            }
+        }
+        service.Disconnect();
+    }
+
+    public Collection<NewsGroupArticle> getArticles() {
+        return articles_.values();
+    }
+
+    public NewsGroupServer getServer() {
+        return server_;
+    }
+
+    public NewsGroupArticle getArticle(String article) {
+        NewsGroupArticle newsGroupArticle = articles_.get(article);
+        if (newsGroupArticle == null) {
+            for (HashMap.Entry<String, NewsGroupArticle> ng : articles_.entrySet()) {
+                newsGroupArticle = ng.getValue().getSubArticel(article);
+                if(newsGroupArticle != null)
+                    break;
+//                if (ng.getValue().getSubArticel(articel).getChildren().containsKey(article)) {
+//                    newsGroupArticle = ng.getValue().getChildren().get(article);
+//                    break;
+//                }
+            }
+        }
+        return newsGroupArticle;
     }
 }
