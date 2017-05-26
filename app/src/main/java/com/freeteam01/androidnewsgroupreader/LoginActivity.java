@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
 
@@ -30,7 +31,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+import com.microsoft.windowsazure.mobileservices.MobileServiceActivityResult;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
@@ -72,7 +77,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         mProgressView = findViewById(R.id.login_progress);
-        mNoRegisterText = (TextView)findViewById(R.id.noregister);
+        mNoRegisterText = (TextView) findViewById(R.id.noregister);
         mNoRegisterText.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -80,7 +85,49 @@ public class LoginActivity extends AppCompatActivity {
                 startActivityForResult(launch, 0);
             }
         });
+
+        if (!AzureService.isInitialized())
+            AzureService.Initialize(this);
+
+        AzureService.getInstance();
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // When request completes
+        if (resultCode == RESULT_OK) {
+            // Check the request code matches the one we send in the login request
+            if (requestCode == AzureService.LOGIN_REQUEST_CODE_GOOGLE) {
+                MobileServiceActivityResult result = AzureService.getInstance().getClient().onActivityResult(data);
+                if (result.isLoggedIn()) {
+                    // login succeeded
+                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
+//                    createTable();
+                } else {
+                    // login failed, check the error message
+                    String errorMessage = result.getErrorMessage();
+                    createAndShowDialog(errorMessage, "Error");
+                }
+            }
+        }
+    }
+
+    private void createAndShowDialog(Exception exception, String title) {
+        Throwable ex = exception;
+        if (exception.getCause() != null) {
+            ex = exception.getCause();
+        }
+        createAndShowDialog(ex.getMessage(), title);
+    }
+
+    private void createAndShowDialog(final String message, final String title) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(message);
+        builder.setTitle(title);
+        builder.create().show();
+    }
+
 
     private void attemptLogin() {
         if (mAuthTask != null) {
@@ -109,8 +156,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         if (cancel) {
             focusView.requestFocus();
-        } else
-        {
+        } else {
             mAuthTask = new UserLoginTask(email, password);
             mAuthTask.execute((Void) null);
         }
@@ -127,11 +173,10 @@ public class LoginActivity extends AppCompatActivity {
             mPassword = password;
         }
 
-        void setProgress(boolean status)
-        {
-           mProgressView.setVisibility(status ? View.VISIBLE : View.GONE);
-           mPasswordView.setEnabled(!status);
-           mEmailView.setEnabled(!status);
+        void setProgress(boolean status) {
+            mProgressView.setVisibility(status ? View.VISIBLE : View.GONE);
+            mPasswordView.setEnabled(!status);
+            mEmailView.setEnabled(!status);
             mNoRegisterText.setClickable(!status);
         }
 
@@ -151,8 +196,7 @@ public class LoginActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            if(mEmail.equals("test@email.com") && mPassword.equals("testpassword"))
-            {
+            if (mEmail.equals("test@email.com") && mPassword.equals("testpassword")) {
                 return true;
             }
             return false;

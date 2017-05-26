@@ -30,38 +30,30 @@ import java.util.concurrent.ExecutionException;
 import java.util.ArrayList;
 
 public class AzureService {
-    private String mobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
+    private String mobileBackendUrl = "http://newsgroupreader.azurewebsites.net";
     private MobileServiceClient client;
     private static AzureService instance = null;
     private MobileServiceSyncTable<NewsGroupEntry> newsGroupEntryTable;
     private List<NewsGroupEntry> newsGroupEntries;
     private boolean azureServiceEventFired = false;
-
     protected Vector _listeners;
+
+    public static final int LOGIN_REQUEST_CODE_GOOGLE = 1;
+    public static final int LOGIN_REQUEST_CODE_FACEBOOK = 2;
+    public static final int LOGIN_REQUEST_CODE_MSA = 3;
+    public static final int LOGIN_REQUEST_CODE_AAD = 4;
+    public static final int LOGIN_REQUEST_CODE_TWITTER = 5;
 
     private AzureService(Context context) {
         this.newsGroupEntries = new ArrayList<>();
         try {
             client = new MobileServiceClient(mobileBackendUrl, context);
 
-/*            client.setAndroidHttpClientFactory(new OkHttpClientFactory() {
-                @Override
-                public OkHttpClient createOkHttpClient() {
-                    OkHttpClient client = new OkHttpClient();
-                    client.setReadTimeout(20, TimeUnit.SECONDS);
-                    client.setWriteTimeout(20, TimeUnit.SECONDS);
-                    return client;
-                }
-            });*/
+            authenticate();
 
-//            newsGroupEntryTable = client.getTable(NewsGroupEntry.class);
             newsGroupEntryTable = client.getSyncTable(NewsGroupEntry.class);
-
             initLocalStore().get();
-
-            loadLocalNewsgroups();
-
-//            refreshItemsFromTable();
+//            loadLocalNewsgroups();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -71,6 +63,11 @@ public class AzureService {
         } catch (MobileServiceLocalStoreException e) {
             e.printStackTrace();
         }
+    }
+
+    private void authenticate() {
+        // Login using the Google provider.
+        client.login("Google", mobileBackendUrl, LOGIN_REQUEST_CODE_GOOGLE);
     }
 
     public void addAzureServiceEventListener(AzureServiceEvent listener) {
@@ -394,6 +391,10 @@ public class AzureService {
 
     public void setAzureServiceEventFired(boolean azureServiceEventFired) {
         this.azureServiceEventFired = azureServiceEventFired;
+    }
+
+    public void setClient(MobileServiceClient client) {
+        this.client = client;
     }
 
     public class NewsGroupEntryComparator implements Comparator<NewsGroupEntry> {

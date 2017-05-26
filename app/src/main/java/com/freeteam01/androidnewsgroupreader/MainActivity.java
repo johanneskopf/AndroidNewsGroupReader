@@ -83,9 +83,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
 
-//        if (!AzureService.isInitialized())
-//            AzureService.Initialize(this);
-
         newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
         server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
