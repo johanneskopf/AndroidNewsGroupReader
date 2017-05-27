@@ -7,8 +7,10 @@ import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.Models.ToDoItem;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
 import com.microsoft.windowsazure.mobileservices.table.MobileServiceTable;
 
@@ -73,8 +75,13 @@ public class AzureServiceTest {
         int itemsToInsert = 5;
         List<NewsGroupArticle> insertedItems = new ArrayList<>();
 
+        NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
+        NewsGroupService service = new NewsGroupService(ngServer);
+        service.Connect();
+        List<NewsGroupEntry> newsgroups = service.getAllNewsgroups();
+
         for (int i = 0; i < itemsToInsert; i++) {
-            NewsGroupArticle item = new NewsGroupArticle("" + (i + 1), "Math", "01.01.2017", "MaxMustermann");
+            NewsGroupArticle item = new NewsGroupArticle(newsgroups.get(0),"" + (i + 1), "Math", "01.01.2017", "MaxMustermann");
             NewsGroupArticle entity = articleTable.insert(item).get();
             insertedItems.add(entity);
         }
@@ -104,9 +111,10 @@ public class AzureServiceTest {
         int itemsCountBefore = entryTable.execute().get().size();
         int itemsToInsert = 5;
         List<NewsGroupEntry> insertedItems = new ArrayList<>();
+        NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
 
         for (int i = 0; i < itemsToInsert; i++) {
-            NewsGroupEntry item = new NewsGroupEntry(i, "Entry_" + (i + 1), false);
+            NewsGroupEntry item = new NewsGroupEntry(ngServer, i, "Entry_" + (i + 1));
             NewsGroupEntry entity = entryTable.insert(item).get();
             insertedItems.add(entity);
         }
