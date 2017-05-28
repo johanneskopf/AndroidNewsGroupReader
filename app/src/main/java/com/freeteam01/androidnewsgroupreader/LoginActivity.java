@@ -103,6 +103,7 @@ public class LoginActivity extends AppCompatActivity {
                     // login succeeded
                     createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
 //                    createTable();
+                    finish();
                 } else {
                     // login failed, check the error message
                     String errorMessage = result.getErrorMessage();
