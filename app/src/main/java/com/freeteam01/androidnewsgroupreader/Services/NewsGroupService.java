@@ -62,36 +62,21 @@ public class NewsGroupService {
         client.selectNewsgroup(newsgroup.getName(), group);
         long first = group.getFirstArticleLong();
         long last = group.getLastArticleLong();
+
         HashMap<String, NewsGroupArticle> articles = new HashMap<>();
-        SortedMap<Integer, List<Article>> articlesByDepth = new TreeMap<>();
 
         for (Article article : client.iterateArticleInfo(first, last)) {
             int references = article.getReferences().length;
-            if (!articlesByDepth.containsKey(references))
-                articlesByDepth.put(references, new ArrayList<Article>());
-
-            articlesByDepth.get(references).add(article);
-        }
-
-       if(articlesByDepth.size() > 0) {
-           for (Article article : articlesByDepth.get(0)) {
-               articles.put(article.getArticleId(), new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
-           }
-           articlesByDepth.remove(0);
-       }
-
-        for (List<Article> articleList : articlesByDepth.values()) {
-            for (Article article : articleList) {
+            if(references == 0)
+                articles.put(article.getArticleId(), new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
+            else {
                 NewsGroupArticle ngArticle = new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
                 ngArticle.addReferences(article.getReferences());
-                NewsGroupArticle root = articles.get(ngArticle.getReferences().get(0));
-                if(root == null)
-                    articles.put(article.getArticleId(), ngArticle);
-                else
+                for (NewsGroupArticle root : articles.values()) {
                     root.addArticle(ngArticle);
+                }
             }
         }
-
         return new ArrayList<>(articles.values());
     }
 
