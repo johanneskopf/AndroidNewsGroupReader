@@ -21,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -52,6 +53,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_login);
 
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -87,48 +89,11 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         if (!AzureService.isInitialized())
+        {
             AzureService.Initialize(this);
-
-        AzureService.getInstance();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // When request completes
-        if (resultCode == RESULT_OK) {
-            // Check the request code matches the one we send in the login request
-            if (requestCode == AzureService.LOGIN_REQUEST_CODE_GOOGLE) {
-                MobileServiceActivityResult result = AzureService.getInstance().getClient().onActivityResult(data);
-                if (result.isLoggedIn()) {
-                    // login succeeded
-                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
-//                    createTable();
-                    finish();
-                } else {
-                    // login failed, check the error message
-                    String errorMessage = result.getErrorMessage();
-                    createAndShowDialog(errorMessage, "Error");
-                }
-            }
+            Log.d("AzureService", "LoginActivity - AzureService.Initialize(this)");
         }
     }
-
-    private void createAndShowDialog(Exception exception, String title) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
-        }
-        createAndShowDialog(ex.getMessage(), title);
-    }
-
-    private void createAndShowDialog(final String message, final String title) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setMessage(message);
-        builder.setTitle(title);
-        builder.create().show();
-    }
-
 
     private void attemptLogin() {
         if (mAuthTask != null) {

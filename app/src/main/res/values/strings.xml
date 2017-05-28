@@ -8,7 +8,6 @@
     <string name="articles">Articles</string>
     <string name="newsgroupprompt">Choose a Newsgroup</string>
 
-
     <string-array name="newsgroupservers">
         <item>news.tugraz.at</item>
     </string-array>
@@ -34,5 +33,6 @@
     <string name="alreadyregisterdprompt">Already registerd? Login</string>
     <string name="error_passwords_not_equal">Passwords not equal</string>
 
+    <string name="subscribe_heading">News Server:</string>
 </resources>
 

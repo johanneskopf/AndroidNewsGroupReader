@@ -47,7 +47,6 @@ public class RuntimeStorage {
         }
     }
 
-
     void loadNewsgroups(String server) throws IOException {
         servers_.get(server).loadNewsGroups();
     }
@@ -55,5 +54,4 @@ public class RuntimeStorage {
     public Set<String> getAllNewsgroupServers() {
         return servers_.keySet();
     }
-
 }

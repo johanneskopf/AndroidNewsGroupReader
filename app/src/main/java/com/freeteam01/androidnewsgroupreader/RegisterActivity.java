@@ -84,13 +84,11 @@ public class RegisterActivity extends AppCompatActivity {
             cancel = true;
         }
 
-        if(TextUtils.isEmpty(password))
-        {
+        if (TextUtils.isEmpty(password)) {
             tv_password.setError(getString(R.string.error_field_required));
             focusView = tv_password;
             cancel = true;
-        }
-        else if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        } else if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             tv_password.setError(getString(R.string.error_invalid_password));
             focusView = tv_password;
             cancel = true;
@@ -115,7 +113,7 @@ public class RegisterActivity extends AppCompatActivity {
         if (cancel) {
             focusView.requestFocus();
         } else {
-            mRegTask= new UserRegisterTask(surename, forename, email, password);
+            mRegTask = new UserRegisterTask(surename, forename, email, password);
             mRegTask.execute((Void) null);
         }
     }
@@ -168,8 +166,8 @@ public class RegisterActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            boolean successfull = true;
-            if (successfull) {
+            boolean successful = true;
+            if (successful) {
                 return true;
             }
             return false;

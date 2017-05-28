@@ -3,6 +3,7 @@ package com.freeteam01.androidnewsgroupreader;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -25,10 +26,13 @@ import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
 import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
+import com.microsoft.windowsazure.mobileservices.MobileServiceActivityResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +53,55 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
+
+    private void createAndShowDialog(Exception exception, String title) {
+        Throwable ex = exception;
+        if (exception.getCause() != null) {
+            ex = exception.getCause();
+        }
+        createAndShowDialog(ex.getMessage(), title);
+    }
+
+    private void createAndShowDialog(final String message, final String title) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(message);
+        builder.setTitle(title);
+        builder.create().show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // When request completes
+        if (resultCode == RESULT_OK) {
+            // Check the request code matches the one we send in the login request
+            if (requestCode == AzureService.LOGIN_REQUEST_CODE_GOOGLE) {
+                MobileServiceActivityResult result = AzureService.getInstance().getClient().onActivityResult(data);
+                if (result.isLoggedIn()) {
+                    // login succeeded
+                    Log.d("AzureService", "LoginActivity - login succeeded");
+                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
+//                    createTable();
+                    AzureService.getInstance().OnAuthenticated();
+
+                    Log.d("AzureService", "MainActivity - AzureService.getInstance()");
+                    AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, this);
+                    Log.d("AzureService", "MainActivity subscribed to AzureEvent");
+                    if (AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class)) {
+                        OnLoaded(SubscribedNewsgroup.class, AzureService.getInstance().getSubscribedNewsgroups());
+                        Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+                    }
+
+//                    finish();
+                } else {
+                    // login failed, check the error message
+                    Log.d("AzureService", "LoginActivity - login failed");
+                    String errorMessage = result.getErrorMessage();
+                    createAndShowDialog(errorMessage, "Error");
+                }
+            }
+        }
+    }
 
     @Override
     public void onStart() {
@@ -75,8 +128,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent launch = new Intent(MainActivity.this, LoginActivity.class);
-        startActivityForResult(launch, 0);
+//        Intent launch = new Intent(MainActivity.this, LoginActivity.class);
+//        startActivityForResult(launch, 0);
 
         setContentView(R.layout.activity_main);
 
@@ -127,14 +180,12 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             }
         });
 
-//        AzureService.getInstance().addAzureServiceEventListener(this);
-        Log.d("AzureService", "MainActivity subscribed to AzureEvent");
-//        if (AzureService.getInstance().isAzureServiceEventFired()) {
-//            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-//            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
-//        }
+        if (!AzureService.isInitialized())
+        {
+            Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
+            AzureService.Initialize(this);
+        }
     }
-
 
     private void showNewGroupArticles() {
         final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
@@ -171,20 +222,14 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         server_spinner_adapter_.notifyDataSetChanged();
     }
 
-    @Override
-    public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
-        ShowSubscribedNewsgroups();
-    }
-
-
     private void ShowSubscribedNewsgroups() {
         NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
+        Log.d("AzureService", "MainActivity - ShowSubscribedNewsgroups: " + server);
         final List<String> subscribedNewsGroupEntries = server.getSubscribed();
         subscribed_spinner_adapter_.clear();
         subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
         subscribed_spinner_adapter_.notifyDataSetChanged();
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -232,6 +277,13 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         });
     }
 
+    @Override
+    public <T> void OnLoaded(Class<T> classType, List<T> entries) {
+        Log.d("AzureService", "MainActivity.OnLoaded: " + classType.getSimpleName());
+        if(classType == SubscribedNewsgroup.class)
+            ShowSubscribedNewsgroups();
+    }
+
     public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
         public NewsGroupSubscribedSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
             super(context, 0, newsgroups);
@@ -250,5 +302,4 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             return convertView;
         }
     }
-
 }
