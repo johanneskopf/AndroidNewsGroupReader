@@ -122,7 +122,7 @@ public class AzureService {
     }
 
     public <T> boolean isAzureServiceEventFired(Class<T> classType) {
-        if(!azureServiceEventFired.containsKey(classType))
+        if (!azureServiceEventFired.containsKey(classType))
             return false;
         return azureServiceEventFired.get(classType);
     }
@@ -206,13 +206,10 @@ public class AzureService {
     }
 
     public <T> void addAzureServiceEventListener(Class<T> classType, AzureServiceEvent listener) {
-        if(azureServiceEventListeners.containsKey(classType))
-        {
-            List<AzureServiceEvent> list =azureServiceEventListeners.get(classType);
+        if (azureServiceEventListeners.containsKey(classType)) {
+            List<AzureServiceEvent> list = azureServiceEventListeners.get(classType);
             list.add(listener);
-        }
-        else
-        {
+        } else {
             List<AzureServiceEvent> list = new ArrayList<>();
             list.add(listener);
             azureServiceEventListeners.put(classType, list);
@@ -342,6 +339,7 @@ public class AzureService {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
+                    boolean changedEntries = false;
                     for (NewsGroupEntry changedEntry : subscribedNewsgroupEntries) {
                         // TODO change "testUserId" to real user id
                         SubscribedNewsgroup subscribedNewsgroup = new SubscribedNewsgroup("testUserId", changedEntry.getServer().getName(), changedEntry.getName());
@@ -370,8 +368,8 @@ public class AzureService {
                         }
 //                        Log.d("AzureService", "Persisted subscribedNewsgroup: " + subscribedNewsgroup);
                     }
-/*                    if (subscribedNewsgroups.size() > 0)
-                        fireAzureServiceEvent(newsGroupEntries);*/
+//                    if (subscribedNewsgroupEntries.size() > 0)
+                    fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
                     Log.d("AzureService", "subscribedNewsgroupEntries successful");
                 } catch (ExecutionException | InterruptedException e) {
                     Log.d("AzureService", "subscribedNewsgroupEntries: " + e.getMessage());
@@ -383,141 +381,4 @@ public class AzureService {
 
         runAsyncTask(task);
     }
-
-
-    /*    private void loadLocalNewsgroups() {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    final List<NewsGroupEntry> storedEntries = getLocalData(NewsGroupEntry.class, newsGroupEntryTable);
-                    newsGroupEntries.clear();
-                    newsGroupEntries.addAll(storedEntries);
-                    Log.d("AzureService", "loaded newsgroupentries from local storage");
-                } catch (final Exception e) {
-                    Log.d("AzureService", "loadLocalNewsgroups: " + e.getMessage());
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                fireAzureServiceEvent(NewsGroupEntry.class, newsGroupEntries);
-                syncLocalWithRemote();
-            }
-        };
-
-        runAsyncTask(task);
-    }*/
-
-/*    public List<NewsGroupEntry> getNewsGroupEntries() {
-        return newsGroupEntries;
-    }*/
-
-/*    public void setSelectedNewsGroupEntries(List<NewsGroupEntry> selectedNewsGroupEntries) {
-        for (NewsGroupEntry changedGroupEntry : selectedNewsGroupEntries) {
-            NewsGroupEntry set = newsGroupEntries.get(newsGroupEntries.indexOf(changedGroupEntry));
-            set.setSubscribed(changedGroupEntry.isSubscribed());
-        }
-    }*/
-
-    /*    public void isNewsgroupStored(NewsGroupEntry item) throws ExecutionException, InterruptedException {
-        newsGroupEntryTable.lookUp(item.getId()).get();
-    }*/
-
-/*    public SubscribedNewsgroup getSubscribedNewsgroupByName(Collection<SubscribedNewsgroup> c, String name) {
-        for (SubscribedNewsgroup o : c) {
-            if (o != null && o.getName().equals(name)) {
-                return o;
-            }
-        }
-        return null;
-    }
-
-    public NewsGroupEntry getEntryWithName(Collection<NewsGroupEntry> c, String name) {
-        for (NewsGroupEntry o : c) {
-            if (o != null && o.getName().equals(name)) {
-                return o;
-            }
-        }
-        return null;
-    }
-
-    public class NewsGroupEntryComparator implements Comparator<NewsGroupEntry> {
-        @Override
-        public int compare(NewsGroupEntry o1, NewsGroupEntry o2) {
-            return o1.getName().compareTo(o2.getName());
-        }
-    }
-
-    private void syncLocalWithNewsgroup() {
-
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-
-                try {
-                    Log.d("AzureService", "getting items from newsgroup");
-                    final List<NewsGroupEntry> results = new ArrayList<>();
-                    NewsGroupService service = new NewsGroupService(null);
-//                    NewsGroupService service = new NewsGroupService("news.tugraz.at");
-                    service.Connect();
-                    results.addAll(service.getAllNewsgroups());
-                    service.Disconnect();
-                    Collections.sort(results, new NewsGroupEntryComparator());
-                    Log.d("AzureService", "loaded items from newsgroup");
-
-                    try {
-                        boolean fireAzureEvent = false;
-                        for (NewsGroupEntry item : results) {
-                            NewsGroupEntry localStored = getEntryWithName(newsGroupEntries, item.getName());
-                            if (localStored == null) {
-                                NewsGroupEntry added = addItemInTable(item, newsGroupEntryTable);
-                                newsGroupEntries.add(added);
-                                Log.d("AzureService", "stored item locally: " + added.getName());
-                                fireAzureEvent = true;
-                            } else {
-                                boolean changed = false;
-                                if (item.getArticleCount() != localStored.getArticleCount()) {
-                                    localStored.setArticleCount(item.getArticleCount());
-                                    changed = true;
-                                }
-                                if (changed) {
-                                    updateItemInTable(localStored, newsGroupEntryTable);
-                                    Log.d("AzureService", "changed item locally: " + localStored.getName());
-                                    fireAzureEvent = true;
-                                }
-                            }
-                        }
-
-                        for (int entry = 0; entry < newsGroupEntries.size(); entry++) {
-                            NewsGroupEntry local = newsGroupEntries.get(entry);
-                            NewsGroupEntry item = getEntryWithName(results, local.getName());
-                            if (item == null) {
-                                deleteItemFromTable(local, newsGroupEntryTable);
-                                newsGroupEntries.remove(local);
-                            }
-                        }
-                        if (fireAzureEvent)
-                            fireAzureServiceEvent(NewsGroupEntry.class, newsGroupEntries);
-                    } catch (ExecutionException e) {
-                        Log.d("AzureService", e.getMessage());
-                    } catch (InterruptedException e) {
-                        Log.d("AzureService", e.getMessage());
-                    }
-                    Log.d("AzureService", "synced items with newsgroup");
-                } catch (final Exception e) {
-                    Log.d("AzureService", e.getMessage());
-                }
-                return null;
-            }
-
-//            @Override
-//            protected void onPostExecute(Void result) {
-//                fireAzureServiceEvent(newsGroupEntries);
-//            }
-        };
-
-        runAsyncTask(task);
-    }*/
 }
