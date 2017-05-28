@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
 import com.microsoft.windowsazure.mobileservices.table.query.Query;
 import com.microsoft.windowsazure.mobileservices.table.query.QueryOperations;
 import com.microsoft.windowsazure.mobileservices.table.query.QueryOrder;
@@ -30,19 +31,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.ArrayList;
 
 public class AzureService {
-    private String mobileBackendUrl = "http://newsgroupreader.azurewebsites.net";
-    private MobileServiceClient client;
+    public static final int LOGIN_REQUEST_CODE_GOOGLE = 1;
+    private static final String URL_SCHEME = "fakenewsapptestapp";
     private static AzureService instance = null;
+    protected Vector _listeners;
+    private String mobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
+    private MobileServiceClient client;
     private MobileServiceSyncTable<NewsGroupEntry> newsGroupEntryTable;
     private List<NewsGroupEntry> newsGroupEntries;
     private boolean azureServiceEventFired = false;
-    protected Vector _listeners;
-
-    public static final int LOGIN_REQUEST_CODE_GOOGLE = 1;
-    public static final int LOGIN_REQUEST_CODE_FACEBOOK = 2;
-    public static final int LOGIN_REQUEST_CODE_MSA = 3;
-    public static final int LOGIN_REQUEST_CODE_AAD = 4;
-    public static final int LOGIN_REQUEST_CODE_TWITTER = 5;
 
     private AzureService(Context context) {
         this.newsGroupEntries = new ArrayList<>();
@@ -65,9 +62,29 @@ public class AzureService {
         }
     }
 
+    public static void Initialize(Context context) {
+        if (instance == null) {
+            instance = new AzureService(context);
+        } else {
+            throw new IllegalStateException("AzureServiceAdapter is already initialized");
+        }
+    }
+
+    public static AzureService getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("AzureServiceAdapter is not initialized");
+        }
+        return instance;
+    }
+
+    public static boolean isInitialized() {
+        return instance != null;
+    }
+
     private void authenticate() {
-        // Login using the Google provider.
-        client.login("Google", mobileBackendUrl, LOGIN_REQUEST_CODE_GOOGLE);
+        HashMap<String, String> parameters = new HashMap<>();
+        parameters.put("access_type", "offline");
+        client.login("Google", URL_SCHEME, LOGIN_REQUEST_CODE_GOOGLE, parameters);
     }
 
     public void addAzureServiceEventListener(AzureServiceEvent listener) {
@@ -183,8 +200,7 @@ public class AzureService {
                             }
                         }
 
-                        for (int entry = 0; entry < newsGroupEntries.size(); entry++)
-                        {
+                        for (int entry = 0; entry < newsGroupEntries.size(); entry++) {
                             NewsGroupEntry local = newsGroupEntries.get(entry);
                             NewsGroupEntry item = getEntryWithName(results, local.getName());
                             if (item == null) {
@@ -215,26 +231,6 @@ public class AzureService {
         runAsyncTask(task);
     }
 
-    public static void Initialize(Context context) {
-        if (instance == null) {
-            instance = new AzureService(context);
-        } else {
-            throw new IllegalStateException("AzureServiceAdapter is already initialized");
-        }
-    }
-
-    public static AzureService getInstance() {
-        if (instance == null) {
-            throw new IllegalStateException("AzureServiceAdapter is not initialized");
-        }
-        return instance;
-    }
-
-
-    public static boolean isInitialized() {
-        return instance != null;
-    }
-
 /*    public ArrayList<String> getSubscribedNewsgroupsTestData() {
         ArrayList<String> test_data = new ArrayList<>();
         test_data.add("tu-graz.flames");
@@ -254,6 +250,10 @@ public class AzureService {
 
     public MobileServiceClient getClient() {
         return client;
+    }
+
+    public void setClient(MobileServiceClient client) {
+        this.client = client;
     }
 
     public void isNewsgroupStored(NewsGroupEntry item) throws ExecutionException, InterruptedException {
@@ -371,7 +371,7 @@ public class AzureService {
                         updateItemInTable(changedEntry);
                         Log.d("AzureService", "Persisted NewsGroupEntry: " + set);
                     }
-                    if(selectedNewsGroupEntries.size() > 0)
+                    if (selectedNewsGroupEntries.size() > 0)
                         fireAzureServiceEvent(newsGroupEntries);
                     Log.d("AzureService", "updated selected items in local database");
                 } catch (ExecutionException | InterruptedException e) {
@@ -393,17 +393,6 @@ public class AzureService {
         this.azureServiceEventFired = azureServiceEventFired;
     }
 
-    public void setClient(MobileServiceClient client) {
-        this.client = client;
-    }
-
-    public class NewsGroupEntryComparator implements Comparator<NewsGroupEntry> {
-        @Override
-        public int compare(NewsGroupEntry o1, NewsGroupEntry o2) {
-            return o1.getName().compareTo(o2.getName());
-        }
-    }
-
     public NewsGroupEntry getEntryWithName(Collection<NewsGroupEntry> c, String name) {
         for (NewsGroupEntry o : c) {
             if (o != null && o.getName().equals(name)) {
@@ -411,5 +400,12 @@ public class AzureService {
             }
         }
         return null;
+    }
+
+    public class NewsGroupEntryComparator implements Comparator<NewsGroupEntry> {
+        @Override
+        public int compare(NewsGroupEntry o1, NewsGroupEntry o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
     }
 }
