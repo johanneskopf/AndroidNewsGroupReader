@@ -111,22 +111,17 @@ public class NewsGroupArticle {
     }
 
     public void addArticle(NewsGroupArticle ngArticle) {
-        addArticle(ngArticle, 0);
-    }
-
-    private void addArticle(NewsGroupArticle ngArticle, int depth) {
-        if (ngArticle.getReferences().get(depth).equals(articleID)) {
-            if (ngArticle.getReferences().size() == depth + 1)
-                children.put(ngArticle.getArticleID(), ngArticle);
-            else {
-                if (children.containsKey(ngArticle.getReferences().get(depth + 1)))
-                    children.get(ngArticle.getReferences().get(depth + 1)).addArticle(ngArticle, depth + 1);
-                else
-                    throw new IllegalArgumentException("An intermediate node is missing");
-            }
-        } else {
-            throw new IllegalArgumentException("The Reference is not the one it should be");
+        String lastRef = null;
+        for (String ref : ngArticle.getReferences()) {
+            lastRef = ref;
         }
+
+        if(lastRef.equals(this.articleID))
+            children.put(ngArticle.articleID, ngArticle);
+        else
+            for (NewsGroupArticle childArticle : children.values()) {
+                childArticle.addArticle(ngArticle);
+            }
     }
 
     public String getText() throws IOException {
