@@ -55,12 +55,6 @@ public class SubscribedNewsgroup {
         return name.equals(that.name);
     }
 
-    @Override
-    public int hashCode() {
-        int result = serverId.hashCode();
-        result = 31 * result + name.hashCode();
-        return result;
-    }
 
     @Override
     public String toString() {

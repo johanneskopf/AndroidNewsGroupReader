@@ -36,6 +36,7 @@ import com.microsoft.windowsazure.mobileservices.MobileServiceActivityResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -195,6 +196,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 super.doInBackground(params);
                 for (NewsGroupServer server : params) {
                     try {
+                        if(server == null)
+                            return null;
                         server.reload();
                         server.reload(selected_newsgroup_);
                     } catch (IOException e) {
@@ -207,8 +210,11 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             protected void onPostExecute(Void aVoid) {
                 post_view_adapter_.clear();
-                NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
-                post_view_adapter_.addAll(ng.getArticles());
+                if(selected_server_ != null && selected_newsgroup_ != null)
+                {
+                    NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
+                    post_view_adapter_.addAll(ng.getArticles());
+                }
                 post_view_adapter_.notifyDataSetChanged();
                 super.onPostExecute(aVoid);
             }
@@ -224,11 +230,21 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     private void ShowSubscribedNewsgroups() {
         NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
+        if(server == null)
+            return;
         Log.d("AzureService", "MainActivity - ShowSubscribedNewsgroups: " + server);
-        final List<String> subscribedNewsGroupEntries = server.getSubscribed();
-        subscribed_spinner_adapter_.clear();
-        subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
-        subscribed_spinner_adapter_.notifyDataSetChanged();
+        final HashSet<String> subscribedNewsGroupEntries = server.getSubscribed();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                subscribed_spinner_adapter_.clear();
+                if(subscribedNewsGroupEntries != null)
+                {
+                    subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
+                }
+                subscribed_spinner_adapter_.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
@@ -301,5 +317,12 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             tv_name.setText(newsgroup);
             return convertView;
         }
+    }
+
+    @Override
+    protected void onResume() {
+        showNewGroupArticles();
+        showNewsgroupServers();
+        super.onResume();
     }
 }

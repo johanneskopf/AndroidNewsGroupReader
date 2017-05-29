@@ -25,6 +25,7 @@ import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,10 +134,34 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
     }
 
     private void showNewsgroups() {
+
         adapter.clear();
-        if (server != null) {
-            adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
-        }
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                if (server == null)
+                    return null;
+                try {
+                    RuntimeStorage.instance().getNewsgroupServer(server).reload();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                if (server == null)
+                    return;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
+                    }
+                });
+                super.onPostExecute(aVoid);
+            }
+        }.execute();
         adapter.notifyDataSetChanged();
     }
 

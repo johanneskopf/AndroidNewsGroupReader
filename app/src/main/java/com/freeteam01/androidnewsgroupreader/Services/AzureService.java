@@ -127,8 +127,8 @@ public class AzureService {
         return azureServiceEventFired.get(classType);
     }
 
-    public <T> boolean setAzureServiceEventFired(Class<T> classType, boolean fired) {
-        return azureServiceEventFired.put(classType, fired);
+    public <T> void setAzureServiceEventFired(Class<T> classType, boolean fired) {
+        azureServiceEventFired.put(classType, fired);
     }
 
     private void authenticate() {
@@ -145,6 +145,9 @@ public class AzureService {
                     final List<SubscribedNewsgroup> storedSubscribedNewsgroupEntries = getLocalData(SubscribedNewsgroup.class, subscribedNewsgroupTable);
                     subscribedNewsgroups.clear();
                     subscribedNewsgroups.addAll(storedSubscribedNewsgroupEntries);
+
+                    RuntimeStorage.instance().setNewsgroups(storedSubscribedNewsgroupEntries);
+
                     final List<Server> storedServerEntries = getLocalData(Server.class, serverTable);
                     servers.clear();
                     servers.addAll(storedServerEntries);
@@ -221,6 +224,8 @@ public class AzureService {
         Log.d("AzureService", "fireAzureServiceEvent of type: " + classType.getSimpleName() + ", because " + entries.size() + " got updated");
         if (azureServiceEventListeners != null && !azureServiceEventListeners.isEmpty()) {
             List<AzureServiceEvent> list = azureServiceEventListeners.get(classType);
+            if(list == null)
+                return;
             for (AzureServiceEvent e : list) {
                 Log.d("AzureService", " - fired for a listener");
                 e.OnLoaded(classType, entries);
@@ -254,6 +259,7 @@ public class AzureService {
         Query query = QueryOperations.tableName("NewsGroupEntry").orderBy("name", QueryOrder.Ascending);
         return newsGroupEntryTable.read(query).get();
 //        return newsGroupEntryTable.read(null).get();
+
     }
 
     public <T> List<T> syncData(Class<T> classType, MobileServiceSyncTable<T> table) throws ExecutionException, InterruptedException {
@@ -369,6 +375,7 @@ public class AzureService {
 //                        Log.d("AzureService", "Persisted subscribedNewsgroup: " + subscribedNewsgroup);
                     }
 //                    if (subscribedNewsgroupEntries.size() > 0)
+                    loadLocalData();
                     fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
                     Log.d("AzureService", "subscribedNewsgroupEntries successful");
                 } catch (ExecutionException | InterruptedException e) {
