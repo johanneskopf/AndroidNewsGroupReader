@@ -1,5 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import android.util.Log;
+
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.ByteArrayOutputStream;
@@ -10,13 +12,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NewsGroupArticle {
     private String id;
     private String articleID;
     private String subject;
-    private String date;
     private String from;
+    private String subject_string;
+    private Author author;
+    private Date date;
     private NewsGroupEntry group;
     private String text;
     private boolean isRead;
@@ -27,8 +33,9 @@ public class NewsGroupArticle {
         this.articleID = articleId;
         this.group = group;
         this.subject = subject;
-        this.date = date;
-        this.from = from;
+        this.author = new Author(from);
+        convertToSubjectString();
+        this.date = new Date(date);
         this.isRead = false;
     }
 
@@ -45,6 +52,34 @@ public class NewsGroupArticle {
     }
 
     public String getSubjectString() {
+        return subject_string;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public List<String> getReferences() {
+        return references;
+    }
+
+    public Author getAuthor(){
+        return author;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public boolean getRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        this.isRead = read;
+    }
+
+    private void convertToSubjectString(){
         if (subject.startsWith("=?UTF-8?Q?")) {
             String subject_cut = subject.replace("=?UTF-8?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
@@ -63,24 +98,14 @@ public class NewsGroupArticle {
                 }
             }
             try {
-                return subject_bytes.toString("UTF-8");
+                subject_string = subject_bytes.toString("UTF-8");
+                Log.d("NGA", subject_string);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
         }
-        return subject;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public boolean getRead() {
-        return isRead;
-    }
-
-    public void setRead(boolean read) {
-        this.isRead = read;
+        else
+            subject_string = subject;
     }
 
     public boolean hasUnreadChildren() {
@@ -91,14 +116,6 @@ public class NewsGroupArticle {
             }
         }
         return false;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public List<String> getReferences() {
-        return references;
     }
 
     public HashMap<String, NewsGroupArticle> getChildren() {

@@ -40,6 +40,8 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
 
     PostViewAdapter tree_view_adapter_;
     TextView article_text_text_view_;
+    TextView from_text_text_view_;
+    TextView date_text_text_view_;
     ListView tree_list_view_;
     List<NewsGroupArticle> articles_ = new ArrayList<>();
     List<NewsGroupArticle> flat_ = new ArrayList<>();
@@ -68,6 +70,9 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         article_text_text_view_ = (TextView) findViewById(R.id.tv_article);
         progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
         article_text_text_view_.setMovementMethod(new ScrollingMovementMethod());
+
+        from_text_text_view_ = (TextView) findViewById(R.id.tv_from);
+        date_text_text_view_ = (TextView) findViewById(R.id.tv_date);
 
         LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText(this);
         loader.execute();
@@ -147,6 +152,8 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         protected void onPostExecute(String article_text) {
             super.onPostExecute(article_text);
             article_text_text_view_.setText(article_text);
+            from_text_text_view_.setText(article_.getAuthor().getNameString());
+            date_text_text_view_.setText(article_.getDate().getDateString());
         }
     }
 

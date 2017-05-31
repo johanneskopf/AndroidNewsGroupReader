@@ -1,0 +1,116 @@
+package com.freeteam01.androidnewsgroupreader.Models;
+
+import android.util.Log;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Created by christian on 31.05.17.
+ */
+
+public class Date {
+    private String date_input_string;
+    private String timezone;
+    private String date;
+    private String weekday;
+    private int day;
+    private String month_string;
+    private int month;
+    private int year;
+    private int hours;
+    private int minutes;
+    private int seconds;
+
+    public Date(String date_input){
+        date_input_string = date_input;
+        splitAndSetDateAndTimezone();
+        splitAndSetDateAttributes();
+    }
+
+    public String getDateInputString(){
+        return date_input_string;
+    }
+
+    public String getTimezone(){
+        return timezone;
+    }
+
+    public String getDateString(){
+        return date;
+    }
+
+    public String getWeekday(){
+        return weekday;
+    }
+
+    public int getDay(){
+        return day;
+    }
+
+    public String getMonthString(){
+        return month_string;
+    }
+
+    public int getMonth(){
+        return month;
+    }
+
+    public int getYear(){
+        return year;
+    }
+
+    public int getHours(){
+        return hours;
+    }
+
+    public int getMinutes(){
+        return minutes;
+    }
+
+    public int getSeconds(){
+        return seconds;
+    }
+
+    private void splitAndSetDateAndTimezone(){
+        Pattern p = Pattern.compile("[^(+)]*");
+        Matcher m = p.matcher(date_input_string);
+        if(m.find())
+            date = m.group(0).trim();
+        else
+            date = "Anon";
+        timezone = date.replace(m.group(0), "");
+    }
+
+    private void splitAndSetDateAttributes(){
+        String[] tokens = date.split(" ");
+        weekday = tokens[0].substring(0, tokens[0].length()-2);
+        day = Integer.valueOf(tokens[1]);
+        month_string = tokens[2];
+        month = getMonthByName(month_string);
+        year = Integer.valueOf(tokens[3]);
+        String[] time_tokens = tokens[4].split(":");
+        hours = Integer.valueOf(time_tokens[0]);
+        minutes = Integer.valueOf(time_tokens[1]);
+        seconds = Integer.valueOf(time_tokens[2]);
+    }
+
+    private int getMonthByName(String month){
+        switch (month){
+            case "Jan": return 1;
+            case "Feb": return 2;
+            case "Mar": return 3;
+            case "Apr": return 4;
+            case "May": return 5;
+            case "Jun": return 6;
+            case "Jul": return 7;
+            case "Aug": return 8;
+            case "Sep": return 9;
+            case "Oct": return 10;
+            case "Nov": return 11;
+            case "Dec": return 12;
+        }
+        return -1;
+    }
+
+}

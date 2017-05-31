@@ -16,24 +16,72 @@
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="8dp"
+        android:paddingTop="8dp">
 
 
         <TextView
+            android:id="@+id/tv_article_name"
             style="@style/Headline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Title Placeholder" />
 
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tv_from"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="11dp"
+                android:layout_toEndOf="@+id/tv_const_from"
+                android:paddingLeft="8dp"
+                android:text="Forname Surname" />
+
+            <TextView
+                android:id="@+id/tv_const_from"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="From:" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tv_const_date"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="Date:" />
+
+            <TextView
+                android:id="@+id/tv_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="11dp"
+                android:layout_toEndOf="@+id/tv_const_date"
+                android:paddingLeft="8dp"
+                android:text="1.1.1990" />
+        </RelativeLayout>
+
         <TextView
             android:id="@+id/tv_article"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
             android:layout_weight="1"
+            android:paddingBottom="8dp"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
+            android:paddingTop="8dp"
             android:scrollbars="vertical"
             android:text="Loading..." />
 
@@ -88,4 +136,5 @@
             android:paddingLeft="8dp"
             android:paddingRight="8dp" />
     </LinearLayout>
+
 </RelativeLayout>
