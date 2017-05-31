@@ -3,6 +3,7 @@ package com.freeteam01.androidnewsgroupreader;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     ListView post_list_view_;
     PostViewAdapter post_view_adapter_;
     ProgressBar progressBar_;
+    FloatingActionButton articleBtn_;
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
@@ -87,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         newsgroupsserver_spinner_.setAdapter(server_spinner_adapter_);
         progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
+        articleBtn_ = (FloatingActionButton) findViewById(R.id.btn_add_article);
         showNewsgroupServers();
 
         newsgroupsserver_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -123,6 +126,17 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             public void onNothingSelected(AdapterView<?> parentView) {
                 selected_newsgroup_ = null;
                 showNewGroupArticles();
+            }
+        });
+
+
+        articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                if(selected_newsgroup_ != null) {
+                    Intent launch = new Intent(MainActivity.this, AddArticleActivity.class);
+                    startActivityForResult(launch, 0);
+                }
             }
         });
 

@@ -4,6 +4,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/btn_add_article"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginRight="30dp"
+        android:clickable="true"
+        android:scaleType="center"
+        app:backgroundTint="@android:color/holo_green_dark"
+        app:fabSize="normal"
+        app:rippleColor="@android:color/background_light"
+        app:srcCompat="@drawable/add_article" />
+
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleLarge"

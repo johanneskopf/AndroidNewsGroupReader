@@ -1,9 +1,11 @@
 package com.freeteam01.androidnewsgroupreader;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableStringBuilder;
 import android.text.method.ScrollingMovementMethod;
@@ -42,6 +44,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
     TextView article_text_text_view_;
     TextView from_text_text_view_;
     TextView date_text_text_view_;
+    TextView article_name_text_text_view_;
     ListView tree_list_view_;
     List<NewsGroupArticle> articles_ = new ArrayList<>();
     List<NewsGroupArticle> flat_ = new ArrayList<>();
@@ -49,6 +52,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
     private EditText et_answer_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
     private ProgressBar progressBar_;
+    private FloatingActionButton articleBtn_;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +77,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
 
         from_text_text_view_ = (TextView) findViewById(R.id.tv_from);
         date_text_text_view_ = (TextView) findViewById(R.id.tv_date);
+        article_name_text_text_view_ = (TextView) findViewById(R.id.tv_article_name);
 
         LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText(this);
         loader.execute();
@@ -83,6 +88,18 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         List<NewsGroupArticle> set_list = new ArrayList<>(article_.getChildren().values());
         setTreeElements(set_list, 1);
         tree_view_adapter_.notifyDataSetChanged();
+
+        articleBtn_ = (FloatingActionButton) findViewById(R.id.btn_answer_article);
+
+        articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                if(article_ != null) {
+                    Intent launch = new Intent(PostActivity.this, AddArticleActivity.class);
+                    startActivityForResult(launch, 0);
+                }
+            }
+        });
 
 //        et_answer_.setCustomSelectionActionModeCallback(new StyleCallback());
     }
@@ -154,6 +171,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             article_text_text_view_.setText(article_text);
             from_text_text_view_.setText(article_.getAuthor().getNameString());
             date_text_text_view_.setText(article_.getDate().getDateString());
+            article_name_text_text_view_.setText(article_.getSubjectString());
         }
     }
 

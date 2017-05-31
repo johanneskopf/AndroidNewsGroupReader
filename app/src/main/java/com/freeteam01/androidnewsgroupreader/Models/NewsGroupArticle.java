@@ -99,7 +99,6 @@ public class NewsGroupArticle {
             }
             try {
                 subject_string = subject_bytes.toString("UTF-8");
-                Log.d("NGA", subject_string);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
