@@ -106,8 +106,7 @@ public class NewsGroupService {
             //TODO: insert user credentials here
             SimpleNNTPHeader nntp_header = new SimpleNNTPHeader("FakeNews <a@a.com>", subject);
             //nntp_header.addNewsgroup(group);
-            //TODO: change this accordingly
-            nntp_header.addNewsgroup("tu-graz.test");
+            nntp_header.addNewsgroup(group);
             writer.write(nntp_header.toString());
             writer.write(article_text);
             writer.close();
@@ -132,8 +131,7 @@ public class NewsGroupService {
             //TODO: insert user credentials here
             SimpleNNTPHeader nntp_header = new SimpleNNTPHeader("FakeNews <a@a.com>", subject);
             //nntp_header.addNewsgroup(group);
-            //TODO: change this accordingly
-            nntp_header.addNewsgroup("tu-graz.test");
+            nntp_header.addNewsgroup(group);
 
             //System.out.println(references);
             String nntp_reference = "";
