@@ -19,6 +19,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -49,19 +51,19 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
     List<NewsGroupArticle> articles_ = new ArrayList<>();
     List<NewsGroupArticle> flat_ = new ArrayList<>();
     private NewsGroupArticle article_;
-    private EditText et_answer_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
     private ProgressBar progressBar_;
     private FloatingActionButton articleBtn_;
+    String article_text_;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post);
 
         Bundle bundle = getIntent().getExtras();
-        String server = bundle.getString("server");
-        String group = bundle.getString("group");
-        String article = bundle.getString("article");
+        final String server = bundle.getString("server");
+        final String group = bundle.getString("group");
+        final String article = bundle.getString("article");
 
         article_ = RuntimeStorage.instance().getNewsgroupServer(server).getNewsgroup(group).getArticle(article);
 
@@ -95,8 +97,33 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             @Override
             public void onClick(View v){
                 if(article_ != null) {
-                    Intent launch = new Intent(PostActivity.this, AddArticleActivity.class);
-                    startActivityForResult(launch, 0);
+                    Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
+                    articleBtn_.startAnimation(ranim);
+
+                    ranim.setAnimationListener(new Animation.AnimationListener() {
+
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            Intent launch = new Intent(PostActivity.this, AddArticleActivity.class);
+                            Bundle b = new Bundle();
+                            b.putString("mode", "answer");
+                            b.putString("server", server);
+                            b.putString("group", group);
+                            b.putString("article", article_.getArticleID());
+                            b.putString("article_text", article_text_);
+                            b.putString("article_subject", article_.getSubjectString());
+                            launch.putExtras(b);
+                            startActivityForResult(launch, 0);                        }
+                    });
+
                 }
             }
         });
@@ -169,67 +196,11 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         protected void onPostExecute(String article_text) {
             super.onPostExecute(article_text);
             article_text_text_view_.setText(article_text);
+            article_text_ = article_text;
             from_text_text_view_.setText(article_.getAuthor().getNameString());
             date_text_text_view_.setText(article_.getDate().getDateString());
             article_name_text_text_view_.setText(article_.getSubjectString());
         }
     }
 
-    private class StyleCallback implements android.view.ActionMode.Callback {
-
-        @Override
-        public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
-            Log.d("FORMAT", "onCreateActionMode");
-            MenuInflater inflater = mode.getMenuInflater();
-            inflater.inflate(R.menu.menu_selection, menu);
-            return true;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
-            return false;
-        }
-
-        @Override
-        public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
-            Log.d("FORMAT", String.format("onActionItemClicked item=%s/%d", item.toString(), item.getItemId()));
-            CharacterStyle cs;
-            int start = et_answer_.getSelectionStart();
-            int end = et_answer_.getSelectionEnd();
-            if (start == -1 || end == -1) {
-                return false;
-            }
-            SpannableStringBuilder ssb = new SpannableStringBuilder(et_answer_.getText());
-            for (StyleSpan s : ssb.getSpans(start, end, StyleSpan.class)) {
-                ssb.removeSpan(s);
-            }
-
-            switch (item.getItemId()) {
-
-                case R.id.bold:
-                    cs = new StyleSpan(Typeface.BOLD);
-                    ssb.setSpan(cs, start, end, 1);
-                    et_answer_.setText(ssb);
-                    return true;
-
-                case R.id.italic:
-                    cs = new StyleSpan(Typeface.ITALIC);
-                    ssb.setSpan(cs, start, end, 1);
-                    et_answer_.setText(ssb);
-                    return true;
-
-                case R.id.underline:
-                    cs = new UnderlineSpan();
-                    ssb.setSpan(cs, start, end, 1);
-                    et_answer_.setText(ssb);
-                    return true;
-            }
-            return false;
-        }
-
-        @Override
-        public void onDestroyActionMode(android.view.ActionMode mode) {
-
-        }
-    }
 }

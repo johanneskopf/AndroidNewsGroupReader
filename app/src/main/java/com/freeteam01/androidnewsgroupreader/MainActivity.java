@@ -14,6 +14,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -134,8 +136,29 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void onClick(View v){
                 if(selected_newsgroup_ != null) {
-                    Intent launch = new Intent(MainActivity.this, AddArticleActivity.class);
-                    startActivityForResult(launch, 0);
+                    Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
+                    articleBtn_.startAnimation(ranim);
+
+                    ranim.setAnimationListener(new Animation.AnimationListener() {
+
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            Intent launch = new Intent(MainActivity.this, AddArticleActivity.class);
+                            Bundle b = new Bundle();
+                            b.putString("mode", "post");
+                            b.putString("server", selected_server_);
+                            b.putString("group", selected_newsgroup_);
+                            launch.putExtras(b);
+                            startActivityForResult(launch, 0);                        }
+                    });
                 }
             }
         });

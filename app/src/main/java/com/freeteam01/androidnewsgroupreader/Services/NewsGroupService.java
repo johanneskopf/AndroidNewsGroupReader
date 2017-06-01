@@ -9,9 +9,11 @@ import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
 import org.apache.commons.net.nntp.NewsgroupInfo;
+import org.apache.commons.net.nntp.SimpleNNTPHeader;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,9 +90,75 @@ public class NewsGroupService {
         while((value = r.read()) != -1){
             article_text += (char) value;
         }
-        System.out.print(article_text);
+
         byte[] article_bytes = article_text.getBytes();
 
         return new String(article_bytes, "UTF-8");
+    }
+
+    public boolean post(String article_text, String subject, String group){
+        try {
+            Writer writer = client.postArticle();
+            if(writer == null) { // failure
+                Log.d("NGS", "writer is null");
+                return false;
+            }
+            //TODO: insert user credentials here
+            SimpleNNTPHeader nntp_header = new SimpleNNTPHeader("FakeNews <a@a.com>", subject);
+            //nntp_header.addNewsgroup(group);
+            //TODO: change this accordingly
+            nntp_header.addNewsgroup("tu-graz.test");
+            writer.write(nntp_header.toString());
+            writer.write(article_text);
+            writer.close();
+            if(!client.completePendingCommand()) { // failure
+                Log.d("NGS", "pending is false");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    public boolean answer(String article_text, String subject, String group, String article_id, List<String> references){
+        try {
+            Writer writer = client.postArticle();
+            if(writer == null) { // failure
+                Log.d("NGS", "writer is null");
+                return false;
+            }
+            //TODO: insert user credentials here
+            SimpleNNTPHeader nntp_header = new SimpleNNTPHeader("FakeNews <a@a.com>", subject);
+            //nntp_header.addNewsgroup(group);
+            //TODO: change this accordingly
+            nntp_header.addNewsgroup("tu-graz.test");
+
+            //System.out.println(references);
+            String nntp_reference = "";
+
+            if(references.size() != 0) {
+                for (String reference : references) {
+                    nntp_reference += reference + " ";
+                }
+            }
+            nntp_reference += article_id;
+            nntp_header.addHeaderField("References", nntp_reference);
+
+            writer.write(nntp_header.toString());
+            //System.out.println(nntp_reference);
+
+            writer.write(article_text);
+            writer.close();
+            if(!client.completePendingCommand()) { // failure
+                Log.d("NGS", "pending is false");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 }

@@ -4,82 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TableLayout
-        android:id="@+id/tableLayout"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp">
-
-        <TableRow
-            android:focusable="true"
-            android:focusableInTouchMode="true">
-
-            <TextView
-                android:id="@+id/tv_const_subject"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_marginTop="8dp"
-                android:gravity="left|center"
-                android:text="Subject:"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/et_subject"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginBottom="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/layout_roundedbg"
-                android:gravity="top|left"
-                android:inputType="textMultiLine"
-                android:maxLines="3"
-                android:minLines="1"
-                android:paddingBottom="10dp"
-                android:paddingLeft="20dp"
-                android:paddingRight="20dp"
-                android:paddingTop="10dp"
-                android:windowSoftInputMode="stateUnchanged" />
-
-        </TableRow>
-    </TableLayout>
-    <TableLayout
-        android:id="@+id/tableLayout1"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp">
-        <TableRow>
-
-        </TableRow>
-        <TableRow>
-
-        </TableRow>
-    </TableLayout>
-
-    <Button
-        android:id="@+id/btn_article_send"
+    <TextView
+        android:id="@+id/tv_const_subject"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/et_post"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="center"
-        android:layout_marginTop="8dp"
-        android:text="Post" />
+        android:layout_marginRight="8dp"
+        android:gravity="left|center"
+        android:text="Subject:"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
 
     <EditText
-        android:id="@+id/et_post"
-        android:layout_width="wrap_content"
+        android:id="@+id/et_subject"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/tableLayout"
-        android:layout_alignStart="@+id/tv_const_article_text"
-        android:layout_below="@+id/tv_const_article_text"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/tv_const_subject"
         android:layout_gravity="center_vertical"
         android:layout_marginTop="8dp"
         android:layout_weight="1"
@@ -88,22 +28,55 @@
         android:inputType="textMultiLine"
         android:maxLines="3"
         android:minLines="1"
-        android:paddingBottom="10dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:paddingTop="10dp"
+        android:paddingBottom="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="8dp"
+        android:textSize="12sp"
         android:windowSoftInputMode="stateUnchanged" />
 
     <TextView
         android:id="@+id/tv_const_article_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/tableLayout"
-        android:layout_below="@+id/tableLayout"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/et_subject"
         android:layout_marginTop="8dp"
         android:gravity="left"
         android:text="Article Text"
         android:textColor="#FFFFFF"
         android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/et_post"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/tv_const_article_text"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:background="@drawable/layout_roundedbg"
+        android:gravity="top|left"
+        android:inputType="textMultiLine"
+        android:maxLines="10"
+        android:minLines="1"
+        android:paddingBottom="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="8dp"
+        android:textSize="12sp"
+        android:windowSoftInputMode="stateUnchanged" />
+
+    <ImageButton
+        android:id="@+id/btn_article_send"
+        style="@android:style/Widget.Holo.Light.ImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et_post"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:background="@android:drawable/ic_menu_send" />
 
 </RelativeLayout>
