@@ -81,14 +81,16 @@ public class NewsGroupService {
     }
 
     public String getArticleText(String id) throws IOException {
-        Reader r = client.retrieveArticle(id);
+        Reader r = client.retrieveArticleBody(id);
+
         String article_text = "";
         int value;
         while((value = r.read()) != -1){
             article_text += (char) value;
         }
-        final String border = "\r\n\r\n";
-        article_text = article_text.substring(article_text.indexOf(border) + border.length());
-        return article_text;
+        System.out.print(article_text);
+        byte[] article_bytes = article_text.getBytes();
+
+        return new String(article_bytes, "UTF-8");
     }
 }

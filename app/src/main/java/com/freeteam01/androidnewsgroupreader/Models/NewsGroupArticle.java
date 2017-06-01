@@ -4,6 +4,8 @@ import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
+import org.apache.commons.net.util.Base64;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -34,7 +36,7 @@ public class NewsGroupArticle {
         this.group = group;
         this.subject = subject;
         this.author = new Author(from);
-        convertToSubjectString();
+        this.subject_string = convertToEncoding(subject);
         this.date = new Date(date);
         this.isRead = false;
     }
@@ -79,9 +81,9 @@ public class NewsGroupArticle {
         this.isRead = read;
     }
 
-    private void convertToSubjectString(){
-        if (subject.startsWith("=?UTF-8?Q?")) {
-            String subject_cut = subject.replace("=?UTF-8?Q?", "");
+    private String convertToEncoding(String encoded_subject){
+        if (encoded_subject.contains("=?UTF-8?Q?")) {
+            String subject_cut = encoded_subject.replace("=?UTF-8?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
             ByteArrayOutputStream subject_bytes = new ByteArrayOutputStream();
             for (int i = 0; i < subject_cut.length(); i++) {
@@ -98,13 +100,20 @@ public class NewsGroupArticle {
                 }
             }
             try {
-                subject_string = subject_bytes.toString("UTF-8");
+                return subject_bytes.toString("UTF-8");
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
         }
+        else if(encoded_subject.contains("=?UTF-8?B?")){
+            int start_index = encoded_subject.indexOf("=?UTF-8?B?") + "=?UTF-8?B?".length() - 1;
+            String subject_cut = encoded_subject.substring(start_index, encoded_subject.length()-1);
+            byte[] valueDecoded= Base64.decodeBase64(subject_cut.getBytes());
+            return new String(valueDecoded);
+        }
         else
-            subject_string = subject;
+            return encoded_subject;
+        return null;
     }
 
     public boolean hasUnreadChildren() {
