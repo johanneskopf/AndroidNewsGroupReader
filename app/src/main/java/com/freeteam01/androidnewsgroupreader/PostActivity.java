@@ -1,29 +1,15 @@
 package com.freeteam01.androidnewsgroupreader;
 
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableStringBuilder;
 import android.text.method.ScrollingMovementMethod;
-import android.text.style.CharacterStyle;
-import android.text.style.StyleSpan;
-import android.text.style.UnderlineSpan;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,7 +18,6 @@ import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
 import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
-import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.util.ArrayList;

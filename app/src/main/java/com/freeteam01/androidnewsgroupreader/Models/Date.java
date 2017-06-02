@@ -1,7 +1,5 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import android.util.Log;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

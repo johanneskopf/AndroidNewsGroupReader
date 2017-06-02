@@ -17,8 +17,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class NewsGroupService {
 
@@ -96,19 +94,18 @@ public class NewsGroupService {
         return new String(article_bytes, "UTF-8");
     }
 
-    public boolean post(String article_text, String subject, String group){
+    public boolean post(String user_name, String user_mail, String article_text,
+                        String subject, String group){
         try {
             Writer writer = client.postArticle();
             if(writer == null) { // failure
                 Log.d("NGS", "writer is null");
                 return false;
             }
-            //TODO: insert user credentials here
-            SimpleNNTPHeader nntp_header = new SimpleNNTPHeader("FakeNews <a@a.com>", subject);
-            //nntp_header.addNewsgroup(group);
-            nntp_header.addNewsgroup(group);
-            writer.write(nntp_header.toString());
-            writer.write(article_text);
+
+            writer.write(constructNNTPMessage(user_name, user_mail, article_text, subject,
+                    group, null, null));
+
             writer.close();
             if(!client.completePendingCommand()) { // failure
                 Log.d("NGS", "pending is false");
@@ -121,33 +118,18 @@ public class NewsGroupService {
         return true;
     }
 
-    public boolean answer(String article_text, String subject, String group, String article_id, List<String> references){
+    public boolean answer(String user_name, String user_mail, String article_text, String subject,
+                          String group, String article_id, List<String> references){
         try {
             Writer writer = client.postArticle();
             if(writer == null) { // failure
                 Log.d("NGS", "writer is null");
                 return false;
             }
-            //TODO: insert user credentials here
-            SimpleNNTPHeader nntp_header = new SimpleNNTPHeader("FakeNews <a@a.com>", subject);
-            //nntp_header.addNewsgroup(group);
-            nntp_header.addNewsgroup(group);
 
-            //System.out.println(references);
-            String nntp_reference = "";
+            writer.write(constructNNTPMessage(user_name, user_mail, article_text, subject, group,
+                    article_id, references));
 
-            if(references.size() != 0) {
-                for (String reference : references) {
-                    nntp_reference += reference + " ";
-                }
-            }
-            nntp_reference += article_id;
-            nntp_header.addHeaderField("References", nntp_reference);
-
-            writer.write(nntp_header.toString());
-            //System.out.println(nntp_reference);
-
-            writer.write(article_text);
             writer.close();
             if(!client.completePendingCommand()) { // failure
                 Log.d("NGS", "pending is false");
@@ -158,5 +140,29 @@ public class NewsGroupService {
             e.printStackTrace();
         }
         return true;
+    }
+
+    public String constructNNTPMessage(String user_name, String user_mail, String article_text,
+                                       String subject, String group, String article_id,
+                                       List<String> references){
+        //TODO: insert user credentials here
+        SimpleNNTPHeader nntp_header = new SimpleNNTPHeader(user_name +  " <" + user_mail + ">", subject);
+        //nntp_header.addNewsgroup(group);
+        nntp_header.addNewsgroup(group);
+
+        //System.out.println(references);
+        if(references != null) {
+            String nntp_reference = "";
+
+            if (references.size() != 0) {
+                for (String reference : references) {
+                    nntp_reference += reference + " ";
+                }
+            }
+
+            nntp_reference += article_id;
+            nntp_header.addHeaderField("References", nntp_reference);
+        }
+        return nntp_header.toString() + article_text;
     }
 }

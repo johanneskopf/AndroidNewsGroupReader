@@ -3,8 +3,8 @@ package com.freeteam01.androidnewsgroupreader;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,8 +21,6 @@ import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.util.ArrayList;
 import java.util.Map;
-
-import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 
 public class TreeActivity extends AppCompatActivity{
 

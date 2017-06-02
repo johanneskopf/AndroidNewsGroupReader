@@ -1,7 +1,5 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import android.util.Log;
-
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import org.apache.commons.net.util.Base64;
@@ -14,8 +12,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class NewsGroupArticle {
     private String id;

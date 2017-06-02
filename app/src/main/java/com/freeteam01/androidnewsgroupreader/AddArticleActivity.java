@@ -21,10 +21,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
-import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
-import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
-import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
@@ -133,7 +130,7 @@ public class AddArticleActivity extends AppCompatActivity {
                 for (NewsGroupServer server : params) {
                     try {
                         service.Connect();
-                        if(service.post(post_text, post_subject, group)){
+                        if(service.post("FakeNews", "a@a.com", post_text, post_subject, group)){
                             Log.d("AAA", "posted");
                         }
                         service.Disconnect();
@@ -166,7 +163,8 @@ public class AddArticleActivity extends AppCompatActivity {
                 for (NewsGroupServer server : params) {
                     try {
                         service.Connect();
-                        if(service.answer(post_text, post_subject, group, article, references)){
+                        //TODO insert user credentials
+                        if(service.answer("FakeNews", "a@a.com", post_text, post_subject, group, article, references)){
                             Log.d("AAA", "answered");
                         }
                         service.Disconnect();
