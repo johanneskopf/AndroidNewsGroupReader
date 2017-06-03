@@ -249,7 +249,7 @@ public class AzureService {
     }
 
     public <T> List<T> getLocalData(Class<T> classType, MobileServiceSyncTable<T> table) throws ExecutionException, InterruptedException {
-        Query query = QueryOperations.tableName(classType.getSimpleName()).orderBy("name", QueryOrder.Ascending);
+        Query query = QueryOperations.tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
         return table.read(query).get();
     }
 
@@ -268,7 +268,7 @@ public class AzureService {
         table.pull(null).get();
         Log.d("AzureService", "syncData: " + classType.getSimpleName());
 //        Query query = QueryOperations.field("selected").eq(val(false));
-        Query query = QueryOperations.tableName(classType.getSimpleName()).orderBy("name", QueryOrder.Ascending);
+        Query query = QueryOperations.tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
         return table.read(query).get();
 //        return newsGroupEntryTable.read(null).get();
     }
@@ -347,8 +347,7 @@ public class AzureService {
                 try {
                     boolean changedEntries = false;
                     for (NewsGroupEntry changedEntry : subscribedNewsgroupEntries) {
-                        // TODO change "testUserId" to real user id
-                        SubscribedNewsgroup subscribedNewsgroup = new SubscribedNewsgroup("testUserId", changedEntry.getServer().getName(), changedEntry.getName());
+                        SubscribedNewsgroup subscribedNewsgroup = new SubscribedNewsgroup(getClient().getCurrentUser().getUserId(), changedEntry.getServer().getName(), changedEntry.getName());
 //                        Log.d("AzureService", "Persisting subscribedNewsgroup: " + subscribedNewsgroup);
 /*                        NewsGroupEntry set = newsGroupEntries.get(newsGroupEntries.indexOf(changedEntry));
                         set.setSubscribed(changedEntry.isSubscribed());
