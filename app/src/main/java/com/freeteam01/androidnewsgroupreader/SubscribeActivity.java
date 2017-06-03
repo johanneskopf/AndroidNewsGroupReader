@@ -1,6 +1,7 @@
 package com.freeteam01.androidnewsgroupreader;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -11,16 +12,20 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.freeteam01.androidnewsgroupreader.Adapter.NewsgroupServerSpinnerAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +40,9 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
     @Override
     public void onStart() {
         super.onStart();
+
+        // refresh changed items each time the activity is opened
+        changedItems = new ArrayList<>();
 
         /*if (AzureService.getInstance().isAzureServiceEventFired()) {
             OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
@@ -54,7 +62,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
 
         final ListView listView = (ListView) findViewById(R.id.lv_newsgroups);
         items = new ArrayList<>();
-        changedItems = new ArrayList<>();
         adapter = new NewsGroupAdapter(this, items); //R.layout.entry_info
         listView.setAdapter(adapter);
 
@@ -77,7 +84,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
         server_spinner.setAdapter(server_spinner_adapter_);
 
-//        checkSaveButtonClick();
+        checkSaveButtonClick();
 
         listView.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view,
@@ -98,12 +105,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
             }
         });
 
-        // TODO Hint: MobileServiceSyncTable.java  tells you which functions are performing
-        // TODO             local operations, and which remote operations
-
         showNewsgroups();
-//        showEntriesFromTestData();
-
 //        AzureService.getInstance().addAzureServiceEventListener(this);
 //        Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
 //        if (AzureService.getInstance().isAzureServiceEventFired()) {
@@ -131,15 +133,35 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         }
     }
 
-    @Override
-    public void OnNewsgroupsLoaded(List<NewsGroupEntry> newsGroupEntries) {
-    }
-
     private void showNewsgroups() {
+
         adapter.clear();
-        if (server != null) {
-            adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
-        }
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                if (server == null)
+                    return null;
+                try {
+                    RuntimeStorage.instance().getNewsgroupServer(server).reload();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                if (server == null)
+                    return;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
+                    }
+                });
+                super.onPostExecute(aVoid);
+            }
+        }.execute();
         adapter.notifyDataSetChanged();
     }
 
@@ -152,9 +174,9 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         });
     }
 
-    /*private void checkSaveButtonClick() {
+    private void checkSaveButtonClick() {
         Button myButton = (Button) findViewById(R.id.btn_save);
-        myButton.setOnClickListener(new OnClickListener() {
+        myButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -165,12 +187,22 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
                     responseText.append("\n" + changedItems.get(i).getName());
                 }
 
-                persistChangedItems();
+                //                AzureService.getInstance().setNewsGroupEntries(items);
+/*                for (NewsGroupEntry newsGroupEntry:changedItems) {
+                    NewsGroupEntry reset = getEntryWithName(items, newsGroupEntry.getName());
+                    reset.setSelected(!newsGroupEntry.isSubscribed());
+                }*/
+//                AzureService.getInstance().setSelectedNewsGroupEntries(changedItems);
+/*                for (int i = 0; i < changedItems.size(); i++) {
+                    if(!changedItems.get(i).isSubscribed())
+                        changedItems.remove(i);
+                }*/
+                AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
 
                 Toast.makeText(getApplicationContext(), responseText, Toast.LENGTH_SHORT).show();
             }
         });
-    }*/
+    }
 
     private void createAndShowDialog(Exception exception, String title) {
         Throwable ex = exception;
@@ -186,6 +218,11 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         builder.setMessage(message);
         builder.setTitle(title);
         builder.create().show();
+    }
+
+    @Override
+    public <T> void OnLoaded(Class<T> classType, List<T> entries) {
+
     }
 
 

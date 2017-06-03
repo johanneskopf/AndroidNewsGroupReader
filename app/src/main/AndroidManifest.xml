@@ -29,10 +29,6 @@
             android:name=".PostActivity"
             android:theme="@style/Base.V21.Theme.AppCompat.Light"
             android:label="Post"/>
-        <activity
-            android:name=".AddArticleActivity"
-            android:theme="@style/Theme.Transparent"
-            android:label="" />
     </application>
 
 </manifest>
