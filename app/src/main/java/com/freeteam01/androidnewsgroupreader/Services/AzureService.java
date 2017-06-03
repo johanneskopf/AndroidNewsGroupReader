@@ -185,8 +185,13 @@ public class AzureService {
                 try {
                     Log.d("AzureService", "START: sync items with remote");
                     final List<SubscribedNewsgroup> storedSubscribedNewsgroupEntries = syncData(SubscribedNewsgroup.class, subscribedNewsgroupTable);
+                    Log.d("AzureServiceItems", "got " + storedSubscribedNewsgroupEntries.size() + " storedSubscribedNewsgroupEntries");
+                    for (SubscribedNewsgroup sng : storedSubscribedNewsgroupEntries) {
+                        Log.d("AzureServiceItems", sng.toString());
+                    }
                     subscribedNewsgroups.clear();
                     subscribedNewsgroups.addAll(storedSubscribedNewsgroupEntries);
+                    RuntimeStorage.instance().setNewsgroups(storedSubscribedNewsgroupEntries);
                     final List<Server> storedServerEntries = syncData(Server.class, serverTable);
                     servers.clear();
                     servers.addAll(storedServerEntries);
@@ -228,7 +233,7 @@ public class AzureService {
         Log.d("AzureService", "fireAzureServiceEvent of type: " + classType.getSimpleName() + ", because " + entries.size() + " got updated");
         if (azureServiceEventListeners != null && !azureServiceEventListeners.isEmpty()) {
             List<AzureServiceEvent> list = azureServiceEventListeners.get(classType);
-            if(list == null)
+            if (list == null)
                 return;
             for (AzureServiceEvent e : list) {
                 Log.d("AzureService", " - fired for a listener");
@@ -255,15 +260,6 @@ public class AzureService {
     public <T> List<T> getLocalData(Class<T> classType, MobileServiceSyncTable<T> table) throws ExecutionException, InterruptedException {
         Query query = QueryOperations.tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
         return table.read(query).get();
-    }
-
-    public List<NewsGroupEntry> syncNewsGroupEntries() throws ExecutionException, InterruptedException {
-        sync().get();
-//        Query query = QueryOperations.field("selected").eq(val(false));
-        Query query = QueryOperations.tableName("NewsGroupEntry").orderBy("name", QueryOrder.Ascending);
-        return newsGroupEntryTable.read(query).get();
-//        return newsGroupEntryTable.read(null).get();
-
     }
 
     public <T> List<T> syncData(Class<T> classType, MobileServiceSyncTable<T> table) throws ExecutionException, InterruptedException {
@@ -377,6 +373,7 @@ public class AzureService {
                         }
 //                        Log.d("AzureService", "Persisted subscribedNewsgroup: " + subscribedNewsgroup);
                     }
+                    subscribedNewsgroupEntries.clear();
 //                    if (subscribedNewsgroupEntries.size() > 0)
                     loadLocalData();
                     fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);

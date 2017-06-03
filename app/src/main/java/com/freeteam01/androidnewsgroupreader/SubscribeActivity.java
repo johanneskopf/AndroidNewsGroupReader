@@ -41,16 +41,10 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
     public void onStart() {
         super.onStart();
 
-        // refresh changed items each time the activity is opened
-        changedItems = new ArrayList<>();
-
-        /*if (AzureService.getInstance().isAzureServiceEventFired()) {
-            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-            Log.d("AzureService", "SubscribeActivity loaded entries as AzureEvent was already fired");
-        }*/ /*else {
-            AzureService.getInstance().addAzureServiceEventListener(this);
-            Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
-        }*/
+        if (changedItems == null)
+            changedItems = new ArrayList<>();
+        else
+            changedItems.clear();
     }
 
     @Override
@@ -84,20 +78,31 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
         server_spinner.setAdapter(server_spinner_adapter_);
 
-        checkSaveButtonClick();
+        Button myButton = (Button) findViewById(R.id.btn_save);
+        myButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                StringBuffer responseText = new StringBuffer();
+                responseText.append("Changed the following Newsgroups...\n");
+
+                for (int i = 0; i < changedItems.size(); i++) {
+                    responseText.append("\n" + changedItems.get(i).getName() + " - subscribed to " + changedItems.get(i).isSubscribed());
+                }
+
+                AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
+
+                Toast.makeText(getApplicationContext(), responseText, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         listView.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-//                NewsGroupEntry entry = (NewsGroupEntry) parent.getItemAtPosition(position);
                 Object o = adapter.getItem(position);
                 if (o == null)
                     return;
                 NewsGroupEntry entry = (NewsGroupEntry) o;
-//                Toast.makeText(getApplicationContext(),
-//                        "Clicked on Row: " + entry.getName(),
-//                        Toast.LENGTH_SHORT).show();
-
                 entry.setSubscribed(!entry.isSubscribed());
                 adapter.notifyDataSetChanged();
                 if (!changedItems.contains(entry))
@@ -106,12 +111,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         });
 
         showNewsgroups();
-//        AzureService.getInstance().addAzureServiceEventListener(this);
-//        Log.d("AzureService", "SubscribeActivity subscribed to AzureEvent");
-//        if (AzureService.getInstance().isAzureServiceEventFired()) {
-//            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-//            Log.d("AzureService", "SubscribeActivity loaded entries as AzureEvent was already fired");
-//        }
     }
 
     @Override
@@ -119,14 +118,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
-//                AzureService.getInstance().setNewsGroupEntries(items);
-/*                for (NewsGroupEntry newsGroupEntry:changedItems) {
-                    NewsGroupEntry reset = getEntryWithName(items, newsGroupEntry.getName());
-                    reset.setSelected(!newsGroupEntry.isSubscribed());
-                }*/
-//                AzureService.getInstance().setSelectedNewsGroupEntries(changedItems);
-//                AzureService.getInstance().persistSelectedNewsGroupEntries(changedItems);
-
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -165,45 +156,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         adapter.notifyDataSetChanged();
     }
 
-    private void createAndShowDialogFromTask(final Exception exception, String title) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createAndShowDialog(exception, "Error");
-            }
-        });
-    }
-
-    private void checkSaveButtonClick() {
-        Button myButton = (Button) findViewById(R.id.btn_save);
-        myButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                StringBuffer responseText = new StringBuffer();
-                responseText.append("Changed the following Newsgroups...\n");
-
-                for (int i = 0; i < changedItems.size(); i++) {
-                    responseText.append("\n" + changedItems.get(i).getName());
-                }
-
-                //                AzureService.getInstance().setNewsGroupEntries(items);
-/*                for (NewsGroupEntry newsGroupEntry:changedItems) {
-                    NewsGroupEntry reset = getEntryWithName(items, newsGroupEntry.getName());
-                    reset.setSelected(!newsGroupEntry.isSubscribed());
-                }*/
-//                AzureService.getInstance().setSelectedNewsGroupEntries(changedItems);
-/*                for (int i = 0; i < changedItems.size(); i++) {
-                    if(!changedItems.get(i).isSubscribed())
-                        changedItems.remove(i);
-                }*/
-                AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
-
-                Toast.makeText(getApplicationContext(), responseText, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
     private void createAndShowDialog(Exception exception, String title) {
         Throwable ex = exception;
         if (exception.getCause() != null) {
@@ -220,11 +172,19 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         builder.create().show();
     }
 
+    private void createAndShowDialogFromTask(final Exception exception, String title) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                createAndShowDialog(exception, "Error");
+            }
+        });
+    }
+
     @Override
     public <T> void OnLoaded(Class<T> classType, List<T> entries) {
 
     }
-
 
     private class NewsGroupAdapter extends ArrayAdapter<NewsGroupEntry> {
 

@@ -200,12 +200,14 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 selected_newsgroup_ = subscribed_newsgroups_spinner_.getItemAtPosition(position).toString();
+                Log.d("AzureService", "MainActivity - onItemSelected - showNewGroupArticles");
                 showNewGroupArticles();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
                 selected_newsgroup_ = null;
+                Log.d("AzureService", "MainActivity - onNothingSelected - showNewGroupArticles");
                 showNewGroupArticles();
             }
         });
@@ -252,6 +254,11 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             }
         });
 
+        if (!AzureService.isInitialized()) {
+            Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
+            AzureService.Initialize(this);
+        }
+
     }
 
     private void showNewGroupArticles() {
@@ -265,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 for (NewsGroupServer server : params) {
                     try {
                         socket_error_msg_ = "";
-                        if(server == null)
+                        if (server == null)
                             return null;
                         server.reload();
                         server.reload(selected_newsgroup_);
@@ -289,11 +296,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             protected void onPostExecute(Void aVoid) {
                 post_view_adapter_.clear();
-                if(selected_server_ == null)
-                    return;
-                NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
-
-                if((socket_error_msg_.length() == 0) && isOnline()) {
+                
+                if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
+                    NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
                     post_view_adapter_.addAll(ng.getArticles());
                     post_view_adapter_.notifyDataSetChanged();
                     tvError_.setVisibility(View.INVISIBLE);
@@ -328,7 +333,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     private void ShowSubscribedNewsgroups() {
         NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
-        if(server == null)
+        if (server == null)
             return;
         Log.d("AzureService", "MainActivity - ShowSubscribedNewsgroups: " + server);
         final HashSet<String> subscribedNewsGroupEntries = server.getSubscribed();
@@ -336,10 +341,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void run() {
                 subscribed_spinner_adapter_.clear();
-                if(subscribedNewsGroupEntries != null)
-                {
+                if (subscribedNewsGroupEntries != null)
                     subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
-                }
                 subscribed_spinner_adapter_.notifyDataSetChanged();
             }
         });
@@ -394,7 +397,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     public <T> void OnLoaded(Class<T> classType, List<T> entries) {
         Log.d("AzureService", "MainActivity.OnLoaded: " + classType.getSimpleName());
-        if(classType == SubscribedNewsgroup.class)
+        if (classType == SubscribedNewsgroup.class)
             ShowSubscribedNewsgroups();
     }
 
