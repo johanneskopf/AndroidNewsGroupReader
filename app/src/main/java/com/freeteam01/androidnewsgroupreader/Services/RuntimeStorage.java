@@ -15,8 +15,6 @@ public class RuntimeStorage {
     static RuntimeStorage instance_;
     HashMap<String, NewsGroupServer> servers_ = new HashMap<>();
 
-    private List<SubscribedNewsgroup> newsgroups;
-
     RuntimeStorage() {
         //Load OfflineStorage and Sync with Azure!
 
@@ -62,12 +60,10 @@ public class RuntimeStorage {
     }
 
     public void setNewsgroups(List<SubscribedNewsgroup> newsgroups) {
-        for (NewsGroupServer s : servers_.values())
-        {
+        for (NewsGroupServer s : servers_.values()) {
             s.clearSubscribed();
         }
-        for (SubscribedNewsgroup ng:
-             newsgroups) {
+        for (SubscribedNewsgroup ng : newsgroups) {
             addNewsgroupServer(ng.getServerId());
             getNewsgroupServer(ng.getServerId()).setSubscribed(ng.getName());
         }
