@@ -24,6 +24,7 @@ public class NewsGroupArticle {
     private NewsGroupEntry group;
     private String text;
     private boolean isRead;
+    private int depth_ = 0;
     private transient List<String> references = new ArrayList<>();
     private transient HashMap<String, NewsGroupArticle> children = new HashMap<>();
 
@@ -75,6 +76,14 @@ public class NewsGroupArticle {
 
     public void setRead(boolean read) {
         this.isRead = read;
+    }
+
+    public int getDepth(){
+        return depth_;
+    }
+
+    public void setDepth(int depth){
+        this.depth_ = depth;
     }
 
     private String convertToEncoding(String encoded_subject){

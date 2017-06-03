@@ -48,6 +48,8 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> {
         } else {
             tv_name.setTypeface(null, Typeface.NORMAL);
         }
+        TextView tv_from_date = (TextView) convertView.findViewById(R.id.tv_from_date);
+        tv_from_date.setText(newsgroup_article.getAuthor().getNameString() + ", " + newsgroup_article.getDate().getDateString());
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
