@@ -14,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -38,6 +39,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity {
@@ -147,14 +150,17 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         newsgroupsserver_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
                 selected_server_ = newsgroupsserver_spinner_.getItemAtPosition(position).toString();
-                ShowSubscribedNewsgroups();
+//                showSubscribedNewsgroups();
+                showSubscribedNewsgroupsAndArticles();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 selected_server_ = null;
-                ShowSubscribedNewsgroups();
+                showSubscribedNewsgroupsAndArticles();
+//                showSubscribedNewsgroups();
             }
         });
 
@@ -170,16 +176,18 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         subscribed_newsgroups_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                selected_newsgroup_ = subscribed_newsgroups_spinner_.getItemAtPosition(position).toString();
-                Log.d("AzureService", "MainActivity - onItemSelected - showNewGroupArticles");
-                showNewGroupArticles();
+                Log.d("AzureService", "MainActivity - onItemSelected - showNewsGroupArticles");
+                selected_newsgroup_ = subscribed_newsgroups_spinner_.getSelectedItem().toString();
+                Log.d("Article", "MainActivity - onItemSelected: " + selected_newsgroup_);
+                showNewsGroupArticles();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
+                Log.d("AzureService", "MainActivity - onNothingSelected - showNewsGroupArticles");
                 selected_newsgroup_ = null;
-                Log.d("AzureService", "MainActivity - onNothingSelected - showNewGroupArticles");
-                showNewGroupArticles();
+                Log.d("Article", "MainActivity - onItemSelected: none");
+                showNewsGroupArticles();
             }
         });
 
@@ -189,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         }
     }
 
-    private void showNewGroupArticles() {
+    private void showNewsGroupArticles() {
         final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
         AsyncTask<NewsGroupServer, Void, Void> task = new SpinnerAsyncTask<NewsGroupServer, Void, Void>(this) {
             @Override
@@ -227,13 +235,13 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
         server_spinner_adapter_.notifyDataSetChanged();
     }
-
-    private void ShowSubscribedNewsgroups() {
+/*
+    private void showSubscribedNewsgroups() {
         NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
         if (server == null)
             return;
-        Log.d("AzureService", "MainActivity - ShowSubscribedNewsgroups: " + server);
-        final HashSet<String> subscribedNewsGroupEntries = server.getSubscribed();
+        Log.d("AzureService", "MainActivity - showSubscribedNewsgroups: " + server);
+        final TreeSet<String> subscribedNewsGroupEntries = server.getSubscribed();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -243,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 subscribed_spinner_adapter_.notifyDataSetChanged();
             }
         });
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -294,8 +302,53 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     public <T> void OnLoaded(Class<T> classType, List<T> entries) {
         Log.d("AzureService", "MainActivity.OnLoaded: " + classType.getSimpleName());
-        if (classType == SubscribedNewsgroup.class)
-            ShowSubscribedNewsgroups();
+        if (classType == SubscribedNewsgroup.class) {
+            showSubscribedNewsgroupsAndArticles();
+            // TODO; only reload ng articles if the selection really has changed
+//            showNewsGroupArticles();
+        }
+    }
+
+    private void showSubscribedNewsgroupsAndArticles() {
+        final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
+        final TreeSet<String> subscribedNewsGroupEntries;
+        if (server != null)
+            subscribedNewsGroupEntries = server.getSubscribed();
+        else
+            subscribedNewsGroupEntries = null;
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String copy = selected_newsgroup_;
+                Log.d("Article", "MainActivity - selected_newsgroup_runOnUiThread - before: " + selected_newsgroup_);
+                subscribed_spinner_adapter_.clear();
+                if (subscribedNewsGroupEntries != null)
+                    subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
+                subscribed_spinner_adapter_.notifyDataSetChanged();
+
+                if (subscribed_newsgroups_spinner_.getSelectedItem() == null)
+                    selected_newsgroup_ = null;
+                else
+                    selected_newsgroup_ = subscribed_newsgroups_spinner_.getSelectedItem().toString();
+
+                if (subscribedNewsGroupEntries != null) {
+                    if (!subscribedNewsGroupEntries.isEmpty() && (copy != null && !subscribedNewsGroupEntries.contains(copy))) {
+//                        subscribed_newsgroups_spinner_.setSelection(Adapter.NO_SELECTION);
+//                        subscribed_newsgroups_spinner_.setSelection(0);
+//                        selected_newsgroup_ = subscribed_newsgroups_spinner_.getSelectedItem().toString();
+                        showNewsGroupArticles();
+                        Log.d("Article", "MainActivity - set selected newsgroup to " + selected_newsgroup_);
+                    } else if (copy == null || !subscribedNewsGroupEntries.contains(copy)) {
+//                        subscribed_newsgroups_spinner_.setSelection(Adapter.NO_SELECTION);
+//                        selected_newsgroup_ = null;
+                        showNewsGroupArticles();
+                        Log.d("Article", "MainActivity - set selected newsgroup to none");
+                    }
+                }
+                Log.d("Article", "MainActivity - selected_newsgroup_runOnUiThread - after: " + selected_newsgroup_);
+            }
+        });
     }
 
     public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
@@ -319,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     @Override
     protected void onResume() {
-        showNewGroupArticles();
+        showNewsGroupArticles();
         showNewsgroupServers();
         super.onResume();
     }

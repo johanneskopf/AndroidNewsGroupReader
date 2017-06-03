@@ -306,14 +306,15 @@ public class AzureService {
 
                     Map<String, ColumnDataType> tableDefinition = new HashMap<>();
                     tableDefinition.put("id", ColumnDataType.String);
+                    tableDefinition.put("userId", ColumnDataType.String);
                     tableDefinition.put("articleId", ColumnDataType.String);
                     localStore.defineTable("ReadArticle", tableDefinition);
 
                     tableDefinition = new HashMap<>();
                     tableDefinition.put("id", ColumnDataType.String);
+                    tableDefinition.put("userId", ColumnDataType.String);
                     tableDefinition.put("name", ColumnDataType.String);
                     tableDefinition.put("url", ColumnDataType.String);
-                    tableDefinition.put("userId", ColumnDataType.String);
                     localStore.defineTable("Server", tableDefinition);
 
                     tableDefinition = new HashMap<>();

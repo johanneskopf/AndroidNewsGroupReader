@@ -27,6 +27,9 @@ import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class SubscribeActivity extends AppCompatActivity implements AzureServiceEvent {
@@ -147,13 +150,24 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+//                        List newsgroups = new ArrayList(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
+//                        Collections.sort(newsgroups);
                         adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
+                        adapter.sort(new NewsGroupEntryComparator());
                     }
                 });
                 super.onPostExecute(aVoid);
             }
         }.execute();
         adapter.notifyDataSetChanged();
+    }
+
+    static class NewsGroupEntryComparator implements Comparator<NewsGroupEntry>
+    {
+        public int compare(NewsGroupEntry n1, NewsGroupEntry n2)
+        {
+            return n1.getName().compareTo(n2.getName());
+        }
     }
 
     private void createAndShowDialog(Exception exception, String title) {
