@@ -17,18 +17,26 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".SubscribeActivity" android:label="@string/subscribe"
+            android:theme="@style/Base.V21.Theme.AppCompat.Light" />
+        <activity android:name=".PostActivity" android:label="Post"
+            android:theme="@style/Base.V21.Theme.AppCompat.Light" />
+        <activity android:name=".LoginActivity" android:label="@string/title_activity_login"
+            android:theme="@style/AppTheme" />
+        <activity android:name=".RegisterActivity" android:label="@string/title_activity_register"
+            android:theme="@style/AppTheme" />
         <activity
-            android:name=".SubscribeActivity"
-            android:theme="@style/Base.V21.Theme.AppCompat.Light"
-            android:label="@string/subscribe"/>
-        <activity
-            android:name=".PostActivity"
-            android:theme="@style/Base.V21.Theme.AppCompat.Light"
-            android:label="Post"/>
+            android:name="com.microsoft.windowsazure.mobileservices.authentication.RedirectUrlActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:host="easyauth.callback" android:scheme="fakenewsapptestapp" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".AddArticleActivity"
             android:theme="@style/Theme.Transparent"
