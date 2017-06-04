@@ -34,5 +34,7 @@
     <string name="error_passwords_not_equal">Passwords not equal</string>
 
     <string name="subscribe_heading">News Server:</string>
+    <string name="article_text">Article Text:</string>
+    <string name="subject">Subject:</string>
 </resources>
 

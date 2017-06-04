@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 if (result.isLoggedIn()) {
                     // login succeeded
                     Log.d("AzureService", "LoginActivity - login succeeded");
-                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
+//                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
 //                    createTable();
                     AzureService.getInstance().OnAuthenticated();
 
@@ -143,15 +143,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-//        Intent launch = new Intent(MainActivity.this, LoginActivity.class);
-//        startActivityForResult(launch, 0);
-
+        setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_main);
-
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
+        super.onCreate(savedInstanceState);
 
         newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
@@ -177,8 +171,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 //            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
 //        }
 
-        if (!AzureService.isInitialized())
-        {
+        if (!AzureService.isInitialized()) {
             Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
             AzureService.Initialize(this);
         }
@@ -228,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         sort_by_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if(post_view_adapter_ != null && selected_server_ != null && selected_newsgroup_ != null) {
+                if (post_view_adapter_ != null && selected_server_ != null && selected_newsgroup_ != null) {
                     post_view_adapter_.clear();
                     sorted_by_ = sort_by_spinner_.getItemAtPosition(position).toString();
                     addSorted(sorted_by_);
@@ -244,8 +237,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
         articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
             @Override
-            public void onClick(View v){
-                if(selected_newsgroup_ != null) {
+            public void onClick(View v) {
+                if (selected_newsgroup_ != null) {
                     Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
                     articleBtn_.startAnimation(ranim);
 
@@ -261,18 +254,17 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
                         @Override
                         public void onAnimationEnd(Animation animation) {
-                            if(isOnline() && socket_error_msg_.length() == 0) {
+                            if (isOnline() && socket_error_msg_.length() == 0) {
                                 Intent launch = new Intent(MainActivity.this, AddArticleActivity.class);
                                 Bundle b = new Bundle();
                                 b.putString("mode", "post");
                                 b.putString("server", selected_server_);
                                 b.putString("group", selected_newsgroup_);
                                 launch.putExtras(b);
-                                tvError_.setVisibility(View.INVISIBLE);
+                                tvError_.setVisibility(View.GONE);
                                 tvError_.setText("");
                                 startActivityForResult(launch, 0);
-                            }
-                            else{
+                            } else {
                                 String error_msg = isOnline() ? socket_error_msg_ : "No Internet connection";
                                 Log.d("MA animation", error_msg);
                                 tvError_.setText(error_msg);
@@ -292,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     }
 
     private void showNewGroupArticles() {
-        if(selected_server_ == null)
+        if (selected_server_ == null)
             return;
         final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
         AsyncTask<NewsGroupServer, Void, Void> task = new SpinnerAsyncTask<NewsGroupServer, Void, Void>(this) {
@@ -310,11 +302,11 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                         Log.d("MA", "Connection to server timed out");
                         socket_error_msg_ = "Connection to server timed out";
                         e.printStackTrace();
-                    } catch (UnknownHostException e){
+                    } catch (UnknownHostException e) {
                         Log.d("MA", "Unknown Host");
                         socket_error_msg_ = "Unknown Host";
                         e.printStackTrace();
-                    } catch (IOException e){
+                    } catch (IOException e) {
                         Log.d("MA", "Connection could not be established");
                         socket_error_msg_ = "Connection could not be established";
                         e.printStackTrace();
@@ -326,21 +318,20 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             protected void onPostExecute(Void aVoid) {
                 post_view_adapter_.clear();
-                
+
                 if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
                     NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
                     addSorted(sorted_by_);
                     post_view_adapter_.notifyDataSetChanged();
-                    tvError_.setVisibility(View.INVISIBLE);
-                    tvError_.setText("");;
-                }
-                else if((socket_error_msg_.length() > 0) || !isOnline()){
+                    tvError_.setVisibility(View.GONE);
+                    tvError_.setText("");
+                    ;
+                } else if ((socket_error_msg_.length() > 0) || !isOnline()) {
                     socket_error_msg_ = isOnline() == false ? "No Internet connection" : socket_error_msg_;
                     Log.d("MA", socket_error_msg_);
                     tvError_.setText(socket_error_msg_);
                     tvError_.setVisibility(View.VISIBLE);
-                }
-                else{
+                } else {
                     throw new IllegalStateException();
                 }
                 super.onPostExecute(aVoid);
@@ -349,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         task.execute(server);
     }
 
-    public void addSorted(String sort_by){
+    public void addSorted(String sort_by) {
         switch (sort_by) {
             case "Sort by Subject":
                 post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedBySubject());
@@ -444,6 +435,13 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             ShowSubscribedNewsgroups();
     }
 
+    @Override
+    protected void onResume() {
+        showNewGroupArticles();
+        showNewsgroupServers();
+        super.onResume();
+    }
+
     public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
         public NewsGroupSubscribedSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
             super(context, 0, newsgroups);
@@ -480,12 +478,5 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             tv_name.setText(sort_by);
             return convertView;
         }
-    }
-
-    @Override
-    protected void onResume() {
-        showNewGroupArticles();
-        showNewsgroupServers();
-        super.onResume();
     }
 }
