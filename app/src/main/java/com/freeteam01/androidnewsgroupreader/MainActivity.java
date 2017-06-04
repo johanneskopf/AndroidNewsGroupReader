@@ -57,22 +57,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
-
-    private void createAndShowDialog(Exception exception, String title) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
-        }
-        createAndShowDialog(ex.getMessage(), title);
-    }
-
-    private void createAndShowDialog(final String message, final String title) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setMessage(message);
-        builder.setTitle(title);
-        builder.create().show();
-    }
+    private Menu menu;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -85,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                     // login succeeded
                     Log.d("AzureService", "LoginActivity - login succeeded");
                     createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
-//                    createTable();
                     AzureService.getInstance().OnAuthenticated();
 
                     Log.d("AzureService", "MainActivity - AzureService.getInstance()");
@@ -94,6 +78,14 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                     if (AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class)) {
                         OnLoaded(SubscribedNewsgroup.class, AzureService.getInstance().getSubscribedNewsgroups());
                         Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+                    }
+
+                    if(menu != null)
+                    {
+                        showOption(R.id.action_settings);
+                        showOption(R.id.action_subscribe);
+                        showOption(R.id.action_logout);
+                        hideOption(R.id.action_login);
                     }
 
 //                    finish();
@@ -110,22 +102,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     public void onStart() {
         super.onStart();
-
-        // refresh shown data
-/*        subscribed_spinner_adapter_.clear();*/
-/*        if(subscribed_newsgroups_ != null)
-        {
-            subscribed_spinner_adapter_.addAll(subscribed_newsgroups_);
-            subscribed_spinner_adapter_.notifyDataSetChanged();
-        }*/
-
-        /*if (AzureService.getInstance().isAzureServiceEventFired()) {
-            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
-        }*/ /*else {
-            AzureService.getInstance().addAzureServiceEventListener(this);
-            Log.d("AzureService", "MainActivity subscribed to AzureEvent");
-        }*/
     }
 
     @Override
@@ -150,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
                 selected_server_ = newsgroupsserver_spinner_.getItemAtPosition(position).toString();
-//                showSubscribedNewsgroups();
                 showSubscribedNewsgroupsAndArticles();
             }
 
@@ -158,7 +133,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             public void onNothingSelected(AdapterView<?> parent) {
                 selected_server_ = null;
                 showSubscribedNewsgroupsAndArticles();
-//                showSubscribedNewsgroups();
             }
         });
 
@@ -233,29 +207,43 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         server_spinner_adapter_.addAll(RuntimeStorage.instance().getAllNewsgroupServers());
         server_spinner_adapter_.notifyDataSetChanged();
     }
-/*
-    private void showSubscribedNewsgroups() {
-        NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
-        if (server == null)
-            return;
-        Log.d("AzureService", "MainActivity - showSubscribedNewsgroups: " + server);
-        final TreeSet<String> subscribedNewsGroupEntries = server.getSubscribed();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                subscribed_spinner_adapter_.clear();
-                if (subscribedNewsGroupEntries != null)
-                    subscribed_spinner_adapter_.addAll(subscribedNewsGroupEntries);
-                subscribed_spinner_adapter_.notifyDataSetChanged();
-            }
-        });
-    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.option_menu, menu);
         return true;
+    }
+
+    private void disableOption(int id) {
+        MenuItem item = menu.findItem(id);
+        item.setEnabled(false);
+    }
+
+    private void enableOption(int id) {
+        MenuItem item = menu.findItem(id);
+        item.setEnabled(true);
+    }
+
+    private void hideOption(int id) {
+        MenuItem item = menu.findItem(id);
+        item.setVisible(false);
+    }
+
+    private void showOption(int id) {
+        MenuItem item = menu.findItem(id);
+        item.setVisible(true);
+    }
+
+    private void setOptionTitle(int id, String title) {
+        MenuItem item = menu.findItem(id);
+        item.setTitle(title);
+    }
+
+    private void setOptionIcon(int id, int iconRes) {
+        MenuItem item = menu.findItem(id);
+        item.setIcon(iconRes);
     }
 
     @Override
@@ -266,6 +254,17 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             case R.id.action_subscribe:
                 Intent launch = new Intent(MainActivity.this, SubscribeActivity.class);
                 startActivityForResult(launch, 0);
+                return true;
+            case R.id.action_logout:
+                AzureService.getInstance().logout();
+                hideOption(R.id.action_settings);
+                hideOption(R.id.action_subscribe);
+                hideOption(R.id.action_logout);
+                showOption(R.id.action_login);
+                createAndShowDialog("Successfully logged out", "Success");
+                return true;
+            case R.id.action_login:
+                AzureService.getInstance().authenticate();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -302,8 +301,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         Log.d("AzureService", "MainActivity.OnLoaded: " + classType.getSimpleName());
         if (classType == SubscribedNewsgroup.class) {
             showSubscribedNewsgroupsAndArticles();
-            // TODO; only reload ng articles if the selection really has changed
-//            showNewsGroupArticles();
         }
     }
 
@@ -373,5 +370,21 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         showNewsGroupArticles();
         showNewsgroupServers();
         super.onResume();
+    }
+
+    private void createAndShowDialog(Exception exception, String title) {
+        Throwable ex = exception;
+        if (exception.getCause() != null) {
+            ex = exception.getCause();
+        }
+        createAndShowDialog(ex.getMessage(), title);
+    }
+
+    private void createAndShowDialog(final String message, final String title) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(message);
+        builder.setTitle(title);
+        builder.create().show();
     }
 }

@@ -2,7 +2,11 @@ package com.freeteam01.androidnewsgroupreader.Services;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
+import android.webkit.ValueCallback;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
@@ -131,7 +135,7 @@ public class AzureService {
         azureServiceEventFired.put(classType, fired);
     }
 
-    private void authenticate() {
+    public void authenticate() {
         HashMap<String, String> parameters = new HashMap<>();
         parameters.put("access_type", "offline");
         client.login("Google", URL_SCHEME, LOGIN_REQUEST_CODE_GOOGLE, parameters);
@@ -385,4 +389,41 @@ public class AzureService {
 
         runAsyncTask(task);
     }
+
+    public void logout()
+    {
+        CookieManager cookieManager = CookieManager.getInstance();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
+                // a callback which is executed when the cookies have been removed
+                @Override
+                public void onReceiveValue(Boolean aBoolean) {
+                    Log.d("AzureService", "Cookie removed: " + aBoolean);
+                }
+            });
+        }
+        else cookieManager.removeAllCookie();
+        client.logout();
+    }
+/*
+    @SuppressWarnings("deprecation")
+    public static void clearCookies(Context context)
+    {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            Log.d("AzureService", "Using clearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        } else
+        {
+            Log.d("AzureService", "Using clearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(context);
+            cookieSyncMngr.startSync();
+            CookieManager cookieManager=CookieManager.getInstance();
+            cookieManager.removeAllCookie();
+            cookieManager.removeSessionCookie();
+            cookieSyncMngr.stopSync();
+            cookieSyncMngr.sync();
+        }
+    }*/
 }
