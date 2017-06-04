@@ -35,6 +35,8 @@
     <string name="alreadyregisterdprompt">Already registerd? Login</string>
     <string name="error_passwords_not_equal">Passwords not equal</string>
 
+    <string name="title_activity_settings">Settings</string>
+
     <string name="subscribe_heading">News Server:</string>
 </resources>
 

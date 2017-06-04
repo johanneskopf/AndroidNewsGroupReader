@@ -113,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
         setContentView(R.layout.activity_main);
 
-
         newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
         server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -250,6 +249,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
+                Intent settings = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivityForResult(settings, 0);
                 return true;
             case R.id.action_subscribe:
                 Intent launch = new Intent(MainActivity.this, SubscribeActivity.class);

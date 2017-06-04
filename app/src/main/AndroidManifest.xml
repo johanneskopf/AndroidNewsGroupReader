@@ -23,6 +23,8 @@
              />
         <activity android:name=".RegisterActivity" android:label="@string/title_activity_register"
              />
+        <activity android:name=".SettingsActivity" android:label="@string/title_activity_settings"
+            />
         <activity
             android:name="com.microsoft.windowsazure.mobileservices.authentication.RedirectUrlActivity">
             <intent-filter>
