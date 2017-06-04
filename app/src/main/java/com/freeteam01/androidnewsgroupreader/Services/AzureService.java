@@ -6,7 +6,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
 import android.webkit.ValueCallback;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
@@ -439,6 +438,7 @@ public class AzureService {
         runAsyncTask(task);
     }
 
+    @SuppressWarnings("deprecation")
     public void logout()
     {
         CookieManager cookieManager = CookieManager.getInstance();
@@ -455,25 +455,4 @@ public class AzureService {
         cacheUserToken(null);
         client.logout();
     }
-/*
-    @SuppressWarnings("deprecation")
-    public static void clearCookies(Context context)
-    {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            Log.d("AzureService", "Using clearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-            CookieManager.getInstance().removeAllCookies(null);
-            CookieManager.getInstance().flush();
-        } else
-        {
-            Log.d("AzureService", "Using clearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-            CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(context);
-            cookieSyncMngr.startSync();
-            CookieManager cookieManager=CookieManager.getInstance();
-            cookieManager.removeAllCookie();
-            cookieManager.removeSessionCookie();
-            cookieSyncMngr.stopSync();
-            cookieSyncMngr.sync();
-        }
-    }*/
 }
