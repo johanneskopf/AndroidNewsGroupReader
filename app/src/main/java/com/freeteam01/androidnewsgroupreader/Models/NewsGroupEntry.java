@@ -1,5 +1,6 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import com.freeteam01.androidnewsgroupreader.Other.NGSorter;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.IOException;
@@ -77,57 +78,22 @@ public class NewsGroupEntry {
     }
 
     public Collection<NewsGroupArticle> getArticlesSortedBySubject(){
-        List<String> names = new ArrayList<>();
-        for(Map.Entry<String, NewsGroupArticle> entry: articles_.entrySet()){
-            names.add(entry.getValue().getSubjectString());
-        }
-        Collections.sort(names);
-        ArrayList<NewsGroupArticle> sorted = new ArrayList<>();
-        for(String name: names){
-            for(Map.Entry<String, NewsGroupArticle> entry: articles_.entrySet()){
-                if(entry.getValue().getSubjectString().equals(name))
-                    sorted.add(entry.getValue());
-            }
-        }
-        return sorted;
+        ArrayList<NewsGroupArticle> temp = new ArrayList<>();
+        temp.addAll(articles_.values());
+        return NGSorter.instance().sortBySubject(temp);
     }
 
     public Collection<NewsGroupArticle> getArticlesSortedByAuthor(){
-        List<String> names = new ArrayList<>();
-        for(Map.Entry<String, NewsGroupArticle> entry: articles_.entrySet()){
-            if(entry.getValue().getAuthor().getSurname() != null)
-                names.add(entry.getValue().getAuthor().getSurname());
-            else
-                names.add(entry.getValue().getAuthor().getNameString());
-        }
-        Collections.sort(names);
-        ArrayList<NewsGroupArticle> sorted = new ArrayList<>();
-        for(String name: names){
-            for(Map.Entry<String, NewsGroupArticle> entry: articles_.entrySet()){
-                if(entry.getValue().getAuthor().getSurname() != null && entry.getValue().getAuthor().getSurname().equals(name))
-                    sorted.add(entry.getValue());
-                else if(entry.getValue().getAuthor().getNameString().equals(name))
-                    sorted.add(entry.getValue());
-            }
-        }
-        return sorted;
+        ArrayList<NewsGroupArticle> temp = new ArrayList<>();
+        temp.addAll(articles_.values());
+        return NGSorter.instance().sortByAuthor(temp);
     }
 
+    //Assuming there aren't two same dates...
     public Collection<NewsGroupArticle> getArticlesSortedByDate(){
-        List<GregorianCalendar> dates = new ArrayList<>();
-        for(Map.Entry<String, NewsGroupArticle> entry: articles_.entrySet()){
-                dates.add(entry.getValue().getDate().getDate());
-        }
-        Collections.sort(dates);
-        ArrayList<NewsGroupArticle> sorted = new ArrayList<>();
-        for(GregorianCalendar date: dates){
-            for(Map.Entry<String, NewsGroupArticle> entry: articles_.entrySet()){
-                if(entry.getValue().getDate().getDate() == date)
-                    sorted.add(entry.getValue());
-            }
-        }
-        Collections.reverse(sorted);
-        return sorted;
+        ArrayList<NewsGroupArticle> temp = new ArrayList<>();
+        temp.addAll(articles_.values());
+        return NGSorter.instance().sortByDate(temp);
     }
 
     public NewsGroupServer getServer() {

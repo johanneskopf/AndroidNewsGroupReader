@@ -1,5 +1,6 @@
 package com.freeteam01.androidnewsgroupreader;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -9,6 +10,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -34,6 +36,7 @@ import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
+import com.freeteam01.androidnewsgroupreader.Other.NGSorter;
 import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
@@ -50,7 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity {
+public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity, SearchView.OnQueryTextListener {
 
     private static final int REQUEST_INTERNET = 0;
 
@@ -66,7 +69,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     Spinner sort_by_spinner_;
     SortBySpinnerAdapter sort_by_spinner_adapter_;
     String socket_error_msg_ = "";
-    String sorted_by_ = "Sort by Most Recent";
+    String sorted_by_ = "init";
+    SearchView search_view_;
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
@@ -213,6 +217,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 selected_newsgroup_ = subscribed_newsgroups_spinner_.getItemAtPosition(position).toString();
+                sorted_by_ = "init";
+                post_view_adapter_.delete();
                 Log.d("AzureService", "MainActivity - onItemSelected - showNewGroupArticles");
                 showNewGroupArticles();
             }
@@ -325,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
             @Override
             protected void onPostExecute(Void aVoid) {
-                post_view_adapter_.clear();
+                post_view_adapter_.delete();
                 
                 if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
                     NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
@@ -350,15 +356,34 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     }
 
     public void addSorted(String sort_by){
+        ArrayList<NewsGroupArticle> temp_articles = new ArrayList<>();
         switch (sort_by) {
             case "Sort by Subject":
-                post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedBySubject());
+                if(post_view_adapter_.getShown().size() > 0) {
+                    temp_articles.addAll(post_view_adapter_.getShown());
+                    post_view_adapter_.addAll(NGSorter.instance().sortBySubject(temp_articles));
+                }
+                else
+                    post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedBySubject());
+                break;
             case "Sort by Author":
-                post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByAuthor());
+                if(post_view_adapter_.getShown().size() > 0) {
+                    temp_articles.addAll(post_view_adapter_.getShown());
+                    post_view_adapter_.addAll(NGSorter.instance().sortByAuthor(temp_articles));
+                }
+                else
+                    post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByAuthor());
+                break;
             case "Sort by Most Recent":
-                post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByDate());
+                if(post_view_adapter_.getShown().size() > 0) {
+                    temp_articles.addAll(post_view_adapter_.getShown());
+                    post_view_adapter_.addAll(NGSorter.instance().sortByDate(temp_articles));
+                }
+                else
+                    post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByDate());
+                break;
             default:
-                post_view_adapter_.addAll(RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticles());
+                post_view_adapter_.addData(RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByDate());
         }
     }
 
@@ -395,6 +420,33 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.option_menu, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+
+        SearchManager searchManager = (SearchManager) MainActivity.this.getSystemService(Context.SEARCH_SERVICE);
+
+        search_view_ = null;
+        if (searchItem != null) {
+            search_view_ = (SearchView) searchItem.getActionView();
+        }
+        if (search_view_ != null) {
+            search_view_.setSearchableInfo(searchManager.getSearchableInfo(MainActivity.this.getComponentName()));
+        }
+        search_view_.setSubmitButtonEnabled(true);
+        search_view_.setOnQueryTextListener(this);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        post_view_adapter_.getFilter().filter(newText);
+        addSorted(sorted_by_);
         return true;
     }
 

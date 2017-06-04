@@ -10,6 +10,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -18,17 +20,42 @@ import com.freeteam01.androidnewsgroupreader.PostActivity;
 import com.freeteam01.androidnewsgroupreader.R;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> {
+public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements Filterable{
     private AppCompatActivity mainActivity;
     private ListView listView;
     private PostViewAdapter adapter;
+    private FriendFilter friend_filter;
+    private ArrayList<NewsGroupArticle> articles_shown_;
+    private Set<NewsGroupArticle> search_set_ = new HashSet<>();
+    private Set<NewsGroupArticle> shown_ = new HashSet<>();
 
     public PostViewAdapter(AppCompatActivity mainActivity, ListView article_list_view, Context context, ArrayList<NewsGroupArticle> articles) {
         super(context, 0, articles);
         this.mainActivity = mainActivity;
         this.listView = article_list_view;
+        this.articles_shown_ = articles;
         this.adapter = this;
+        this.search_set_.addAll(articles);
+    }
+
+    public void addData(Collection<NewsGroupArticle> data){
+        adapter.addAll(data);
+        search_set_.clear();
+        shown_.clear();
+        search_set_.addAll(data);
+    }
+
+    public void delete(){
+        adapter.clear();
+        search_set_.clear();
+    }
+
+    public Set<NewsGroupArticle> getShown(){
+        return shown_;
     }
 
     @Override
@@ -68,6 +95,65 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> {
         });
 
         return convertView;
+    }
+
+    @Override
+    public Filter getFilter() {
+        if (friend_filter == null) {
+            friend_filter = new FriendFilter();
+        }
+
+        return friend_filter;
+    }
+
+    /**
+     * Custom filter for friend list
+     * Filter content in friend list according to the search text
+     */
+    private class FriendFilter extends Filter {
+
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            FilterResults filterResults = new FilterResults();
+            if (constraint!=null && constraint.length()>0) {
+                ArrayList<NewsGroupArticle> tempList = new ArrayList<NewsGroupArticle>();
+
+                // search content in friend list
+                for (NewsGroupArticle article : search_set_) {
+                    if (article.getSubjectString().toLowerCase().contains(constraint.toString().toLowerCase())) {
+                        tempList.add(article);
+                    }
+                }
+
+                filterResults.count = tempList.size();
+                filterResults.values = tempList;
+            } else {
+                filterResults.count = search_set_.size();
+                ArrayList<NewsGroupArticle> temp = new ArrayList<>();
+                temp.addAll(search_set_);
+                filterResults.values = temp;
+            }
+
+            return filterResults;
+        }
+
+
+        /**
+         * Notify about filtered list to ui
+         * @param constraint text
+         * @param results filtered result
+         */
+        @SuppressWarnings("unchecked")
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            ArrayList<NewsGroupArticle> shownArticles = (ArrayList<NewsGroupArticle>) results.values;
+            shown_.addAll(shownArticles);
+            adapter.clear();
+
+            adapter.addAll(shownArticles);
+
+            adapter.notifyDataSetChanged();
+        }
     }
 
 }
