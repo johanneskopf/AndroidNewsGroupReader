@@ -22,10 +22,10 @@ public class NewsgroupServerSpinnerAdapter extends ArrayAdapter<String> {
         String newsgroup = getItem(position);
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.newsgroup_post_listview, parent, false);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_element, parent, false);
         }
 
-        TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
+        TextView tv_name = (TextView) convertView.findViewById(R.id.tv_newsgroup);
         tv_name.setText(newsgroup);
         return convertView;
     }

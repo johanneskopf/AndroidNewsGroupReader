@@ -8,10 +8,33 @@
     <string name="articles">Articles</string>
     <string name="newsgroupprompt">Choose a Newsgroup</string>
 
-
     <string-array name="newsgroupservers">
         <item>news.tugraz.at</item>
     </string-array>
 
+    <string name="title_activity_login">Login</string>
+
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_login">Login</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+    <string name="noaccountprompt">No account yet? Create one</string>
+    <string name="title_activity_register">Register</string>
+    <string name="prompt_surname">Surname</string>
+    <string name="prompt_forename">Forename</string>
+    <string name="prompt_passwordrep">Password repeat</string>
+    <string name="action_register">Register</string>
+    <string name="alreadyregisterdprompt">Already registerd? Login</string>
+    <string name="error_passwords_not_equal">Passwords not equal</string>
+
+    <string name="subscribe_heading">News Server:</string>
+    <string name="article_text">Article Text:</string>
+    <string name="subject">Subject:</string>
 </resources>
 
