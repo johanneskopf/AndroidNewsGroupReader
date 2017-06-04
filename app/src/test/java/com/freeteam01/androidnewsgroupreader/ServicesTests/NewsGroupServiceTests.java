@@ -2,9 +2,11 @@ package com.freeteam01.androidnewsgroupreader.ServicesTests;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupPostArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class NewsGroupServiceTests {
 
         service.Disconnect();
     }
-
+    
     @Test
     public void getAllTopicsFromSWPNewsgroup() throws Exception {
         NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
@@ -77,4 +79,22 @@ public class NewsGroupServiceTests {
 
         service.Disconnect();
     }
-}
+
+    @Ignore("Don't spam the NG") @Test
+    public void postToTestNG() throws Exception {
+        NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
+        NewsGroupService service = new NewsGroupService(ngServer);
+        service.Connect();
+
+        NewsGroupPostArticle article = new NewsGroupPostArticle(
+                "Test <test@test.com>",
+                "Re: Just testing",
+                "This is just a test");
+
+        article.addNewsgroupToPostTo("tu-graz.test");
+        article.addReference("<ogh046$fdb$1@news.tugraz.at>");
+
+        service.postArticle(article);
+
+        service.Disconnect();
+    }}
