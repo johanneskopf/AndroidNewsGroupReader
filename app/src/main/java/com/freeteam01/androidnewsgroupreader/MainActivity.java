@@ -137,8 +137,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
         setContentView(R.layout.activity_main);
 
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
 
         newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
