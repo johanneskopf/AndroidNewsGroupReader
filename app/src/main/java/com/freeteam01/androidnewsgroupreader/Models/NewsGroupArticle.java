@@ -1,5 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import android.util.Log;
+
 import com.freeteam01.androidnewsgroupreader.BuildConfig;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
@@ -21,7 +23,7 @@ public class NewsGroupArticle {
     private String from;
     private String subject_string;
     private Author author;
-    private Date date;
+    private PostDate date;
     private NewsGroupEntry group;
     private String text;
     private boolean isRead;
@@ -33,9 +35,9 @@ public class NewsGroupArticle {
         this.articleID = articleId;
         this.group = group;
         this.subject = subject;
-        this.author = new Author(from);
+        this.author = new Author(convertToEncoding(from));
         this.subject_string = convertToEncoding(subject);
-        this.date = new Date(date);
+        this.date = new PostDate(date);
         this.isRead = false;
     }
 
@@ -67,7 +69,7 @@ public class NewsGroupArticle {
         return author;
     }
 
-    public Date getDate() {
+    public PostDate getDate() {
         return date;
     }
 
@@ -117,8 +119,34 @@ public class NewsGroupArticle {
             byte[] valueDecoded= Base64.decodeBase64(subject_cut.getBytes());
             return new String(valueDecoded);
         }
-        else
+        else if(encoded_subject.contains("=?ISO-8859-15?Q?") || encoded_subject.contains("=?iso-8859-15?Q?")) {
+            String subject_cut = encoded_subject.contains("=?ISO-8859-15?Q?") ? encoded_subject.replace("=?ISO-8859-15?Q?", "") :
+                    encoded_subject.replace("=?iso-8859-15?Q?", "");
+            subject_cut = subject_cut.replace("?=", "");
+            subject_cut = subject_cut.replace("_", " ");
+            ByteArrayOutputStream subject_bytes = new ByteArrayOutputStream();
+            for (int i = 0; i < subject_cut.length(); i++) {
+                char c = subject_cut.charAt(i);
+                if (c == '=') {
+                    String first_value = String.valueOf(subject_cut.charAt(i + 1));
+                    String second_value = String.valueOf(subject_cut.charAt(i + 2));
+                    Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
+                    int converted_int = (int) converted;
+                    subject_bytes.write((byte) converted_int);
+                    i += 2;
+                } else {
+                    subject_bytes.write((byte) c);
+                }
+            }
+            try {
+                return subject_bytes.toString("ISO-8859-15");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
             return encoded_subject;
+        }
         return null;
     }
 

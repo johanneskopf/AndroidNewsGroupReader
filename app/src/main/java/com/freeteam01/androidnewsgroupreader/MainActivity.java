@@ -9,7 +9,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,6 +24,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.freeteam01.androidnewsgroupreader.Adapter.NewsgroupServerSpinnerAdapter;
@@ -44,8 +44,10 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity {
@@ -61,7 +63,10 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     ProgressBar progressBar_;
     FloatingActionButton articleBtn_;
     TextView tvError_;
+    Spinner sort_by_spinner_;
+    SortBySpinnerAdapter sort_by_spinner_adapter_;
     String socket_error_msg_ = "";
+    String sorted_by_ = "Sort by Most Recent";
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
@@ -155,6 +160,14 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
         articleBtn_ = (FloatingActionButton) findViewById(R.id.btn_add_article);
         tvError_ = (TextView) findViewById(R.id.tv_errors);
+        sort_by_spinner_ = (Spinner) findViewById(R.id.spinner_sort);
+        ArrayList<String> sort = new ArrayList<>();
+        sort.add("Sort by Most Recent");
+        sort.add("Sort by Subject");
+        sort.add("Sort by Author");
+        sort_by_spinner_adapter_ = new SortBySpinnerAdapter(this, sort);
+        sort_by_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sort_by_spinner_.setAdapter(sort_by_spinner_adapter_);
 
 
         //        AzureService.getInstance().addAzureServiceEventListener(this);
@@ -209,6 +222,23 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 selected_newsgroup_ = null;
                 Log.d("AzureService", "MainActivity - onNothingSelected - showNewGroupArticles");
                 showNewGroupArticles();
+            }
+        });
+
+        sort_by_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(post_view_adapter_ != null && selected_server_ != null && selected_newsgroup_ != null) {
+                    post_view_adapter_.clear();
+                    sorted_by_ = sort_by_spinner_.getItemAtPosition(position).toString();
+                    addSorted(sorted_by_);
+                    post_view_adapter_.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
             }
         });
 
@@ -299,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 
                 if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
                     NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
-                    post_view_adapter_.addAll(ng.getArticles());
+                    addSorted(sorted_by_);
                     post_view_adapter_.notifyDataSetChanged();
                     tvError_.setVisibility(View.INVISIBLE);
                     tvError_.setText("");;
@@ -317,6 +347,19 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             }
         };
         task.execute(server);
+    }
+
+    public void addSorted(String sort_by){
+        switch (sort_by) {
+            case "Sort by Subject":
+                post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedBySubject());
+            case "Sort by Author":
+                post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByAuthor());
+            case "Sort by Most Recent":
+                post_view_adapter_.addAll((ArrayList) RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticlesSortedByDate());
+            default:
+                post_view_adapter_.addAll(RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_).getArticles());
+        }
     }
 
     public boolean isOnline() {
@@ -416,6 +459,25 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
             TextView tv_name = (TextView) convertView.findViewById(R.id.tv_newsgroup);
             tv_name.setText(newsgroup);
+            return convertView;
+        }
+    }
+
+    public class SortBySpinnerAdapter extends ArrayAdapter<String> {
+        public SortBySpinnerAdapter(Context context, ArrayList<String> sort) {
+            super(context, 0, sort);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            String sort_by = getItem(position);
+
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_element, parent, false);
+            }
+
+            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_newsgroup);
+            tv_name.setText(sort_by);
             return convertView;
         }
     }

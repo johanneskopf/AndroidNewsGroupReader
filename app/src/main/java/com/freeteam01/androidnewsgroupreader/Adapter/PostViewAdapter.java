@@ -69,4 +69,5 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> {
 
         return convertView;
     }
+
 }

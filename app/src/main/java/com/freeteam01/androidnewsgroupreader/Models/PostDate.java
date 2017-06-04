@@ -1,5 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -7,10 +9,10 @@ import java.util.regex.Pattern;
  * Created by christian on 31.05.17.
  */
 
-public class Date {
+public class PostDate {
     private String date_input_string;
     private String timezone;
-    private String date;
+    private String date_string;
     private String weekday;
     private int day;
     private String month_string;
@@ -19,11 +21,13 @@ public class Date {
     private int hours;
     private int minutes;
     private int seconds;
+    private GregorianCalendar date;
 
-    public Date(String date_input){
+    public PostDate(String date_input){
         date_input_string = date_input;
         splitAndSetDateAndTimezone();
         splitAndSetDateAttributes();
+        this.date = new GregorianCalendar(year, month, day, hours, minutes, seconds);
     }
 
     public String getDateInputString(){
@@ -35,6 +39,10 @@ public class Date {
     }
 
     public String getDateString(){
+        return date_string;
+    }
+
+    public GregorianCalendar getDate(){
         return date;
     }
 
@@ -74,14 +82,14 @@ public class Date {
         Pattern p = Pattern.compile("[^(+)]*");
         Matcher m = p.matcher(date_input_string);
         if(m.find())
-            date = m.group(0).trim();
+            date_string = m.group(0).trim();
         else
-            date = "Anon";
-        timezone = date.replace(m.group(0), "");
+            date_string = "Anon";
+        timezone = date_string.replace(m.group(0), "");
     }
 
     private void splitAndSetDateAttributes(){
-        String[] tokens = date.split(" ");
+        String[] tokens = date_string.split(" ");
         weekday = tokens[0].substring(0, tokens[0].length()-2);
         day = Integer.valueOf(tokens[1]);
         month_string = tokens[2];
