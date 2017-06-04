@@ -1,6 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Services;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
@@ -13,6 +14,7 @@ import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.Server;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
 import com.microsoft.windowsazure.mobileservices.table.query.Query;
 import com.microsoft.windowsazure.mobileservices.table.query.QueryOperations;
 import com.microsoft.windowsazure.mobileservices.table.query.QueryOrder;
@@ -31,6 +33,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class AzureService {
+    public static final String SHAREDPREFFILE = "temp";
+    public static final String USERIDPREF = "uid";
+    public static final String TOKENPREF = "tkn";
+    public static Context context= null;
 
     public static final int LOGIN_REQUEST_CODE_GOOGLE = 1;
     private static final String URL_SCHEME = "fakenewsapptestapp";
@@ -55,6 +61,7 @@ public class AzureService {
     // TODO             local operations, and which remote operations
 
     private AzureService(Context context) {
+        this.context = context;
         azureServiceEventListeners = new HashMap<>();
         azureServiceEventFired = new HashMap<>();
 
@@ -110,6 +117,7 @@ public class AzureService {
     public void OnAuthenticated() {
         // only execute this if the login was successful
 
+        cacheUserToken(client.getCurrentUser());
         readArticleTable = client.getSyncTable("ReadArticle", ReadArticle.class);
         serverTable = client.getSyncTable("Server", Server.class);
         subscribedNewsgroupTable = client.getSyncTable("SubscribedNewsgroup", SubscribedNewsgroup.class);
@@ -136,9 +144,50 @@ public class AzureService {
     }
 
     public void authenticate() {
-        HashMap<String, String> parameters = new HashMap<>();
-        parameters.put("access_type", "offline");
-        client.login("Google", URL_SCHEME, LOGIN_REQUEST_CODE_GOOGLE, parameters);
+        if(loadUserTokenCache(client))
+        {
+            OnAuthenticated();
+        }
+        else
+        {
+            HashMap<String, String> parameters = new HashMap<>();
+            parameters.put("access_type", "offline");
+            client.login("Google", URL_SCHEME, LOGIN_REQUEST_CODE_GOOGLE, parameters);
+        }
+    }
+
+    private boolean loadUserTokenCache(MobileServiceClient client)
+    {
+        SharedPreferences prefs = context.getSharedPreferences(SHAREDPREFFILE, Context.MODE_PRIVATE);
+        String userId = prefs.getString(USERIDPREF, null);
+        if (userId == null)
+            return false;
+        String token = prefs.getString(TOKENPREF, null);
+        if (token == null)
+            return false;
+
+        MobileServiceUser user = new MobileServiceUser(userId);
+        user.setAuthenticationToken(token);
+        client.setCurrentUser(user);
+
+        return true;
+    }
+
+    private void cacheUserToken(MobileServiceUser user)
+    {
+        SharedPreferences prefs = context.getSharedPreferences(SHAREDPREFFILE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        if(user == null)
+        {
+            editor.putString(USERIDPREF, null);
+            editor.putString(TOKENPREF, null);
+        }
+        else
+        {
+            editor.putString(USERIDPREF, user.getUserId());
+            editor.putString(TOKENPREF, user.getAuthenticationToken());
+        }
+        editor.commit();
     }
 
     private void loadLocalData() {
@@ -403,6 +452,7 @@ public class AzureService {
             });
         }
         else cookieManager.removeAllCookie();
+        cacheUserToken(null);
         client.logout();
     }
 /*
