@@ -85,7 +85,7 @@ public class NewsGroupServer {
         return name_;
     }
 
-    public Collection getAllNewsgroups() {
+    public Collection<NewsGroupEntry> getAllNewsgroups() {
         return newsgroups_.values();
     }
 

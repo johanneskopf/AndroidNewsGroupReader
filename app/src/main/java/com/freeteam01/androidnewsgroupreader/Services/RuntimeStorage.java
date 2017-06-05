@@ -1,12 +1,16 @@
 package com.freeteam01.androidnewsgroupreader.Services;
 
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.UserSetting;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +18,7 @@ public class RuntimeStorage {
     private static RuntimeStorage instance_;
     private HashMap<String, NewsGroupServer> servers_ = new HashMap<>();
     private UserSetting userSetting = null;
+    private Set<String> already_read = new HashSet<>();
 
     RuntimeStorage() {
         final String tugraz = "news.tugraz.at";
@@ -64,5 +69,15 @@ public class RuntimeStorage {
 
     public void setUserSetting(UserSetting userSetting) {
         this.userSetting = userSetting;
+    }
+
+    public void setReadArticles(List<ReadArticle> readArticles) {
+        for (ReadArticle article : readArticles) {
+            already_read.add(article.getArticleId());
+        }
+    }
+
+    public boolean isRead(String articleID) {
+        return already_read.contains(articleID);
     }
 }

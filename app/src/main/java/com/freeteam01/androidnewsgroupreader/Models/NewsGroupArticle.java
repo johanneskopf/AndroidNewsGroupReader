@@ -1,6 +1,8 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
 import com.freeteam01.androidnewsgroupreader.BuildConfig;
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
+import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import org.apache.commons.net.util.Base64;
@@ -73,6 +75,7 @@ public class NewsGroupArticle {
 
     public void setRead(boolean read) {
         this.isRead = read;
+        AzureService.getInstance().readArticleChanged(this);
     }
 
     public int getDepth(){
