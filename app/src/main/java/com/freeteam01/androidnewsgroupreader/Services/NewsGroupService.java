@@ -1,23 +1,22 @@
 package com.freeteam01.androidnewsgroupreader.Services;
 
-import android.util.Log;
-
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupPostArticle;
 
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
 import org.apache.commons.net.nntp.NewsgroupInfo;
+import org.apache.commons.net.nntp.SimpleNNTPHeader;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class NewsGroupService {
 
@@ -91,5 +90,32 @@ public class NewsGroupService {
         final String border = "\r\n\r\n";
         article_text = article_text.substring(article_text.indexOf(border) + border.length());
         return new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
+    }
+
+    public void postArticle(NewsGroupPostArticle article) throws IOException {
+        if(!client.isAllowedToPost())
+            throw new IOException("Client is not allowed to post to NG");
+
+        Writer writer = client.postArticle();
+        if(writer == null)
+            throw new IOException("Couldn't get a Writer");
+
+        SimpleNNTPHeader header = new SimpleNNTPHeader(article.getFrom(), article.getSubject());
+
+        for (String newsgroup : article.getNewsgroups()) {
+            header.addNewsgroup(newsgroup);
+        }
+
+        StringBuilder references = new StringBuilder();
+        for (String reference : article.getReferences()) {
+            references.append(reference + " ");
+        }
+        header.addHeaderField("References", references.toString());
+
+        writer.write(header.toString());
+        writer.write(article.getMessage());
+        writer.close();
+        if(!client.completePendingCommand())
+            throw new IOException("Post couldn't be finished");
     }
 }
