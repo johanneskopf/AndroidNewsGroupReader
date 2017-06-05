@@ -15,6 +15,7 @@ import android.widget.ImageButton;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,6 +38,16 @@ public class AddArticleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_article);
+
+        if(RuntimeStorage.instance().getUserSetting() == null ||
+                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getEmail())||
+                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getForename()) ||
+                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getSurname()))
+        {
+            Intent launch = new Intent(AddArticleActivity.this, SettingsActivity.class);
+            startActivityForResult(launch, 0);
+            finish();
+        }
 
         Bundle bundle = getIntent().getExtras();
         mode = bundle.getString("mode");
