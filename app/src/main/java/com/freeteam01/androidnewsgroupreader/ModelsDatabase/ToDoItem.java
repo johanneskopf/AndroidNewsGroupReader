@@ -1,4 +1,4 @@
-package com.freeteam01.androidnewsgroupreader.Models;
+package com.freeteam01.androidnewsgroupreader.ModelsDatabase;
 
 public class ToDoItem {
     private String id;

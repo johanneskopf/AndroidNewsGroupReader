@@ -12,6 +12,7 @@ import org.apache.commons.net.nntp.SimpleNNTPHeader;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,7 +89,7 @@ public class NewsGroupService {
         }
         final String border = "\r\n\r\n";
         article_text = article_text.substring(article_text.indexOf(border) + border.length());
-        return article_text;
+        return new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
     }
 
     public void postArticle(NewsGroupPostArticle article) throws IOException {

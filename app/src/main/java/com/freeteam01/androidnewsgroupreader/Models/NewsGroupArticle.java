@@ -1,5 +1,6 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import com.freeteam01.androidnewsgroupreader.BuildConfig;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.ByteArrayOutputStream;
@@ -125,7 +126,7 @@ public class NewsGroupArticle {
 
     public String getText() throws IOException {
         if (text == null) {
-            assert (group != null);
+            if (BuildConfig.DEBUG && group == null) throw new AssertionError("getText(): group should never be null");
             NewsGroupService service = new NewsGroupService(group.getServer());
             try {
                 service.Connect();
