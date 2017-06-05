@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     private AtomicInteger background_jobs_count = new AtomicInteger();
 
     private NewsGroupSortType sortType = NewsGroupSortType.DATE;
+    private Menu menu;
 
     private void createAndShowDialog(Exception exception, String title) {
         Throwable ex = exception;
@@ -88,8 +89,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         builder.setTitle(title);
         builder.create().show();
     }
-
-    private Menu menu;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -112,8 +111,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                         Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
                     }
 
-                    if(menu != null)
-                    {
+                    if (menu != null) {
                         showOption(R.id.action_settings);
                         showOption(R.id.action_subscribe);
                         showOption(R.id.action_logout);
@@ -291,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     }
 
     private void showNewsGroupArticles() {
-        if(selected_server_ == null)
+        if (selected_server_ == null)
             return;
         final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
         AsyncTask<NewsGroupServer, Void, Void> task = new SpinnerAsyncTask<NewsGroupServer, Void, Void>(this) {
@@ -533,6 +531,15 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         super.onResume();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (!search_view_.isIconified()) {
+            search_view_.setIconified(true);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
         public NewsGroupSubscribedSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
             super(context, 0, newsgroups);
@@ -552,7 +559,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         }
     }
 
-
     public class SortBySpinnerAdapter extends ArrayAdapter<String> {
         public SortBySpinnerAdapter(Context context, ArrayList<String> sort) {
             super(context, 0, sort);
@@ -571,5 +577,4 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             return convertView;
         }
     }
-
 }
