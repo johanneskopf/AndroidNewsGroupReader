@@ -1,11 +1,9 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import com.freeteam01.androidnewsgroupreader.Other.NGSorter;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.Date;
 
 public class NewsGroupEntry {
 
@@ -75,25 +73,6 @@ public class NewsGroupEntry {
 
     public Collection<NewsGroupArticle> getArticles() {
         return articles_.values();
-    }
-
-    public Collection<NewsGroupArticle> getArticlesSortedBySubject(){
-        ArrayList<NewsGroupArticle> temp = new ArrayList<>();
-        temp.addAll(articles_.values());
-        return NGSorter.instance().sortBySubject(temp);
-    }
-
-    public Collection<NewsGroupArticle> getArticlesSortedByAuthor(){
-        ArrayList<NewsGroupArticle> temp = new ArrayList<>();
-        temp.addAll(articles_.values());
-        return NGSorter.instance().sortByAuthor(temp);
-    }
-
-    //Assuming there aren't two same dates...
-    public Collection<NewsGroupArticle> getArticlesSortedByDate(){
-        ArrayList<NewsGroupArticle> temp = new ArrayList<>();
-        temp.addAll(articles_.values());
-        return NGSorter.instance().sortByDate(temp);
     }
 
     public NewsGroupServer getServer() {

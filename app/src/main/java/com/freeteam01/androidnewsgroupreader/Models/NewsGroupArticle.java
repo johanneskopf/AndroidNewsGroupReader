@@ -49,10 +49,6 @@ public class NewsGroupArticle {
         return articleID;
     }
 
-    public String getSubject() {
-        return subject;
-    }
-
     public String getSubjectString() {
         return subject_string;
     }
