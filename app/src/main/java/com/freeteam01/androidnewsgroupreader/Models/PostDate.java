@@ -1,6 +1,5 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

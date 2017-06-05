@@ -18,8 +18,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
-import com.freeteam01.androidnewsgroupreader.Other.ArticleSorter;
-import com.freeteam01.androidnewsgroupreader.Other.NewsGroupSortType;
 import com.freeteam01.androidnewsgroupreader.PostActivity;
 import com.freeteam01.androidnewsgroupreader.R;
 
@@ -27,8 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
 
 public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements Filterable {
     private AppCompatActivity mainActivity;

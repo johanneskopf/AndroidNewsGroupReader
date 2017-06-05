@@ -1,7 +1,5 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
-import android.util.Log;
-
 import com.freeteam01.androidnewsgroupreader.BuildConfig;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 

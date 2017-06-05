@@ -3,7 +3,9 @@ package com.freeteam01.androidnewsgroupreader.Models;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Objects;
 
 public class NewsGroupEntry {
 
