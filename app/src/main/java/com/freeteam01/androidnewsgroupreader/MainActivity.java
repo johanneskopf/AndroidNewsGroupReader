@@ -1,16 +1,16 @@
 package com.freeteam01.androidnewsgroupreader;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -34,7 +33,9 @@ import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
+import com.freeteam01.androidnewsgroupreader.Other.ArticleSorter;
 import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
+import com.freeteam01.androidnewsgroupreader.Other.NewsGroupSortType;
 import com.freeteam01.androidnewsgroupreader.Other.SpinnerAsyncTask;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.AzureServiceEvent;
@@ -45,13 +46,11 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity {
+public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity, SearchView.OnQueryTextListener {
 
     private static final int REQUEST_INTERNET = 0;
 
@@ -64,10 +63,32 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     ProgressBar progressBar_;
     FloatingActionButton articleBtn_;
     TextView tvError_;
+    Spinner sort_by_spinner_;
+    SortBySpinnerAdapter sort_by_spinner_adapter_;
     String socket_error_msg_ = "";
+    SearchView search_view_;
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
+
+    private NewsGroupSortType sortType = NewsGroupSortType.DATE;
+
+    private void createAndShowDialog(Exception exception, String title) {
+        Throwable ex = exception;
+        if (exception.getCause() != null) {
+            ex = exception.getCause();
+        }
+        createAndShowDialog(ex.getMessage(), title);
+    }
+
+    private void createAndShowDialog(final String message, final String title) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(message);
+        builder.setTitle(title);
+        builder.create().show();
+    }
+
     private Menu menu;
 
     @Override
@@ -117,12 +138,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-//        Intent launch = new Intent(MainActivity.this, LoginActivity.class);
-//        startActivityForResult(launch, 0);
-
+        setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_main);
+        super.onCreate(savedInstanceState);
 
         newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
@@ -131,6 +149,14 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
         articleBtn_ = (FloatingActionButton) findViewById(R.id.btn_add_article);
         tvError_ = (TextView) findViewById(R.id.tv_errors);
+        sort_by_spinner_ = (Spinner) findViewById(R.id.spinner_sort);
+        ArrayList<String> sort = new ArrayList<>();
+        sort.add("Sort by Most Recent");
+        sort.add("Sort by Subject");
+        sort.add("Sort by Author");
+        sort_by_spinner_adapter_ = new SortBySpinnerAdapter(this, sort);
+        sort_by_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sort_by_spinner_.setAdapter(sort_by_spinner_adapter_);
 
 
         //        AzureService.getInstance().addAzureServiceEventListener(this);
@@ -140,8 +166,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 //            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
 //        }
 
-        if (!AzureService.isInitialized())
-        {
+        if (!AzureService.isInitialized()) {
             Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
             AzureService.Initialize(this);
         }
@@ -191,10 +216,36 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             }
         });
 
+        sort_by_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (post_view_adapter_ != null && selected_server_ != null && selected_newsgroup_ != null) {
+                    String sort_by = sort_by_spinner_.getItemAtPosition(position).toString();
+                    switch (sort_by) {
+                        case "Sort by Subject":
+                            sortType = NewsGroupSortType.SUBJECT;
+                            break;
+                        case "Sort by Author":
+                            sortType = NewsGroupSortType.AUTHOR;
+                            break;
+                        case "Sort by Most Recent":
+                            sortType = NewsGroupSortType.DATE;
+                            break;
+                    }
+                }
+                post_view_adapter_.sort(new ArticleSorter(sortType));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
         articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
             @Override
-            public void onClick(View v){
-                if(selected_newsgroup_ != null) {
+            public void onClick(View v) {
+                if (selected_newsgroup_ != null) {
                     Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
                     articleBtn_.startAnimation(ranim);
 
@@ -210,18 +261,17 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
                         @Override
                         public void onAnimationEnd(Animation animation) {
-                            if(isOnline() && socket_error_msg_.length() == 0) {
+                            if (isOnline() && socket_error_msg_.length() == 0) {
                                 Intent launch = new Intent(MainActivity.this, AddArticleActivity.class);
                                 Bundle b = new Bundle();
                                 b.putString("mode", "post");
                                 b.putString("server", selected_server_);
                                 b.putString("group", selected_newsgroup_);
                                 launch.putExtras(b);
-                                tvError_.setVisibility(View.INVISIBLE);
+                                tvError_.setVisibility(View.GONE);
                                 tvError_.setText("");
                                 startActivityForResult(launch, 0);
-                            }
-                            else{
+                            } else {
                                 String error_msg = isOnline() ? socket_error_msg_ : "No Internet connection";
                                 Log.d("MA animation", error_msg);
                                 tvError_.setText(error_msg);
@@ -259,11 +309,11 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                         Log.d("MA", "Connection to server timed out");
                         socket_error_msg_ = "Connection to server timed out";
                         e.printStackTrace();
-                    } catch (UnknownHostException e){
+                    } catch (UnknownHostException e) {
                         Log.d("MA", "Unknown Host");
                         socket_error_msg_ = "Unknown Host";
                         e.printStackTrace();
-                    } catch (IOException e){
+                    } catch (IOException e) {
                         Log.d("MA", "Connection could not be established");
                         socket_error_msg_ = "Connection could not be established";
                         e.printStackTrace();
@@ -272,24 +322,21 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 return null;
             }
 
-            @Override
             protected void onPostExecute(Void aVoid) {
-                post_view_adapter_.clear();
-                
                 if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
                     NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
+                    post_view_adapter_.clear();
                     post_view_adapter_.addAll(ng.getArticles());
+                    post_view_adapter_.sort(new ArticleSorter(sortType));
                     post_view_adapter_.notifyDataSetChanged();
-                    tvError_.setVisibility(View.INVISIBLE);
-                    tvError_.setText("");;
-                }
-                else if((socket_error_msg_.length() > 0) || !isOnline()){
+                    tvError_.setVisibility(View.GONE);
+                    tvError_.setText("");
+                } else if ((socket_error_msg_.length() > 0) || !isOnline()) {
                     socket_error_msg_ = isOnline() == false ? "No Internet connection" : socket_error_msg_;
                     Log.d("MA", socket_error_msg_);
                     tvError_.setText(socket_error_msg_);
                     tvError_.setVisibility(View.VISIBLE);
-                }
-                else{
+                } else {
                     throw new IllegalStateException();
                 }
                 super.onPostExecute(aVoid);
@@ -315,6 +362,32 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         this.menu = menu;
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.option_menu, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+
+        SearchManager searchManager = (SearchManager) MainActivity.this.getSystemService(Context.SEARCH_SERVICE);
+
+        search_view_ = null;
+        if (searchItem != null) {
+            search_view_ = (SearchView) searchItem.getActionView();
+        }
+        if (search_view_ != null) {
+            search_view_.setSearchableInfo(searchManager.getSearchableInfo(MainActivity.this.getComponentName()));
+        }
+        search_view_.setSubmitButtonEnabled(true);
+        search_view_.setOnQueryTextListener(this);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        post_view_adapter_.getFilter().filter(newText);
         return true;
     }
 
@@ -452,6 +525,13 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         });
     }
 
+    @Override
+    protected void onResume() {
+        showNewsGroupArticles();
+        showNewsgroupServers();
+        super.onResume();
+    }
+
     public class NewsGroupSubscribedSpinnerAdapter extends ArrayAdapter<String> {
         public NewsGroupSubscribedSpinnerAdapter(Context context, ArrayList<String> newsgroups) {
             super(context, 0, newsgroups);
@@ -462,35 +542,33 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             String newsgroup = getItem(position);
 
             if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.newsgroup_post_listview, parent, false);
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_element, parent, false);
             }
 
-            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_post);
+            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_newsgroup);
             tv_name.setText(newsgroup);
             return convertView;
         }
     }
 
-    @Override
-    protected void onResume() {
-        showNewsGroupArticles();
-        showNewsgroupServers();
-        super.onResume();
-    }
 
-    private void createAndShowDialog(Exception exception, String title) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
+    public class SortBySpinnerAdapter extends ArrayAdapter<String> {
+        public SortBySpinnerAdapter(Context context, ArrayList<String> sort) {
+            super(context, 0, sort);
         }
-        createAndShowDialog(ex.getMessage(), title);
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            String sort_by = getItem(position);
+
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_element, parent, false);
+            }
+
+            TextView tv_name = (TextView) convertView.findViewById(R.id.tv_newsgroup);
+            tv_name.setText(sort_by);
+            return convertView;
+        }
     }
 
-    private void createAndShowDialog(final String message, final String title) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setMessage(message);
-        builder.setTitle(title);
-        builder.create().show();
-    }
 }

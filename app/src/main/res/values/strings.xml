@@ -41,5 +41,7 @@
     <string name="settings_email">Email</string>
 
     <string name="subscribe_heading">News Server:</string>
+    <string name="article_text">Article Text:</string>
+    <string name="subject">Subject:</string>
 </resources>
 

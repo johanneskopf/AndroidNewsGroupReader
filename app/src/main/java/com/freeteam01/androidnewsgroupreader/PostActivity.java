@@ -118,6 +118,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
 
     public void setTreeElements(List<NewsGroupArticle> articles, int depth) {
         for (NewsGroupArticle article : articles) {
+            article.setDepth(depth);
             flat_.add(article);
             tree_view_adapter_.add(article);
 //            tree_view_adapter_.add(addNTimes(" ", depth) + article.getSubjectString());
