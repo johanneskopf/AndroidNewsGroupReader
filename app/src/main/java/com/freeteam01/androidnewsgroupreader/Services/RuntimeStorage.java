@@ -2,6 +2,7 @@ package com.freeteam01.androidnewsgroupreader.Services;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.UserSetting;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,21 +13,11 @@ import java.util.Set;
 public class RuntimeStorage {
     private static RuntimeStorage instance_;
     private HashMap<String, NewsGroupServer> servers_ = new HashMap<>();
+    private UserSetting userSetting = null;
 
     RuntimeStorage() {
-        //Load OfflineStorage and Sync with Azure!
-
-        //TestCode
-
         final String tugraz = "news.tugraz.at";
         addNewsgroupServer(tugraz);
-
-        ArrayList<String> subscribed = new ArrayList<>();
-        subscribed.add("tu-graz.lv.bs");
-        subscribed.add("tu-graz.lv.swp");
-        subscribed.add("tu-graz.lv.bwl");
-        subscribed.add("tu-graz.test");
-//        getNewsgroupServer(tugraz).setSubscribed(subscribed);
     }
 
     public static RuntimeStorage instance() {
@@ -65,5 +56,13 @@ public class RuntimeStorage {
             addNewsgroupServer(ng.getServerId());
             getNewsgroupServer(ng.getServerId()).setSubscribed(ng.getName());
         }
+    }
+
+    public UserSetting getUserSetting() {
+        return userSetting;
+    }
+
+    public void setUserSetting(UserSetting userSetting) {
+        this.userSetting = userSetting;
     }
 }

@@ -204,6 +204,10 @@ public class AzureService {
                     final List<UserSetting> storedUserSettingEntries = getLocalData(UserSetting.class, userSettingTable);
                     userSettings.clear();
                     userSettings.addAll(storedUserSettingEntries);
+                    if(userSettings.size() > 0)
+                    {
+                        RuntimeStorage.instance().setUserSetting(userSettings.get(0));
+                    }
                     Log.d("AzureService", "loaded data from local storage");
                 } catch (final Exception e) {
                     Log.d("AzureService", "loadLocalData: " + e.getMessage());
@@ -483,6 +487,7 @@ public class AzureService {
     public void persist(UserSetting entry) {
         String userId = client.getCurrentUser().getUserId();
         entry.setUserId(userId);
+        RuntimeStorage.instance().setUserSetting(entry);
         if (userSettings.size() > 0) {
             entry.setId(userSettings.get(0).getId());
             Log.d("AzureService", "Entry values: " + entry.toString());
