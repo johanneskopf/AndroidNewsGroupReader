@@ -5,6 +5,7 @@ import android.util.Log;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupPostArticle;
 
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
@@ -13,6 +14,9 @@ import org.apache.commons.net.nntp.SimpleNNTPHeader;
 
 import java.io.IOException;
 import java.io.Reader;
+
+import java.nio.charset.StandardCharsets;
+
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,6 +101,9 @@ public class NewsGroupService {
     public boolean post(String user_name, String user_mail, String article_text,
                         String subject, String group){
         try {
+            if(!client.isAllowedToPost())
+                throw new IOException("Client is not allowed to post to NG");
+
             Writer writer = client.postArticle();
             if(writer == null) { // failure
                 Log.d("NGS", "writer is null");
@@ -114,6 +121,7 @@ public class NewsGroupService {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
         return true;
     }
@@ -121,6 +129,9 @@ public class NewsGroupService {
     public boolean answer(String user_name, String user_mail, String article_text, String subject,
                           String group, String article_id, List<String> references){
         try {
+            if(!client.isAllowedToPost())
+                throw new IOException("Client is not allowed to post to NG");
+
             Writer writer = client.postArticle();
             if(writer == null) { // failure
                 Log.d("NGS", "writer is null");
@@ -138,6 +149,7 @@ public class NewsGroupService {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
         return true;
     }
@@ -163,6 +175,7 @@ public class NewsGroupService {
             nntp_reference += article_id;
             nntp_header.addHeaderField("References", nntp_reference);
         }
-        return nntp_header.toString() + article_text;
+        return nntp_header.toString() + new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
     }
+
 }

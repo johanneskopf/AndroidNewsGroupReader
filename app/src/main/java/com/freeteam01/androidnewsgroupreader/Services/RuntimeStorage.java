@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 public class RuntimeStorage {
-    static RuntimeStorage instance_;
-    HashMap<String, NewsGroupServer> servers_ = new HashMap<>();
+    private static RuntimeStorage instance_;
+    private HashMap<String, NewsGroupServer> servers_ = new HashMap<>();
 
     RuntimeStorage() {
         //Load OfflineStorage and Sync with Azure!

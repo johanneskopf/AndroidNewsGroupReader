@@ -2,9 +2,11 @@ package com.freeteam01.androidnewsgroupreader.ServicesTests;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupPostArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -57,7 +59,7 @@ public class NewsGroupServiceTests {
 
         service.Disconnect();
     }
-
+    
     @Test
     public void getAllTopicsFromSWPNewsgroup() throws Exception {
         NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
@@ -114,4 +116,5 @@ public class NewsGroupServiceTests {
 
         assertTrue(test_post.equals(reference_message));
     }
+
 }
