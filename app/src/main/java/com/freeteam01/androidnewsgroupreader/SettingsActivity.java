@@ -1,25 +1,21 @@
 package com.freeteam01.androidnewsgroupreader;
 
-import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.UserSetting;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private AutoCompleteTextView mEmailView;
+    private AutoCompleteTextView emailView;
+    private AutoCompleteTextView forenameView;
+    private AutoCompleteTextView surnameView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +23,17 @@ public class SettingsActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_settings);
 
-        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        emailView = (AutoCompleteTextView) findViewById(R.id.email);
+        forenameView = (AutoCompleteTextView) findViewById(R.id.forename);
+        surnameView = (AutoCompleteTextView) findViewById(R.id.surname);
+
+        UserSetting userSetting = AzureService.getInstance().getUserSetting();
+        if(userSetting != null)
+        {
+            emailView.setText(userSetting.getEmail());
+            forenameView.setText(userSetting.getForename());
+            surnameView.setText(userSetting.getSurname());
+        }
 
         Button saveSettingsButton = (Button) findViewById(R.id.save_settings_button);
         saveSettingsButton.setOnClickListener(new OnClickListener() {
@@ -39,16 +45,19 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void saveSettings() {
-        mEmailView.setError(null);
+        emailView.setError(null);
 
-        String email = mEmailView.getText().toString();
+        String email = emailView.getText().toString();
+        String forename = forenameView.getText().toString();
+        String surname = surnameView.getText().toString();
 
         if (TextUtils.isEmpty(email)) {
-            mEmailView.setError(getString(R.string.error_field_required));
+            emailView.setError(getString(R.string.error_field_required));
         }
 
         if (!TextUtils.isEmpty(email)) {
-            // TODO save settings here
+            UserSetting entry = new UserSetting(null, email, forename, surname);
+            AzureService.getInstance().persist(entry);
             onBackPressed();
         }
     }
