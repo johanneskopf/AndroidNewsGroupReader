@@ -3,6 +3,8 @@ package com.freeteam01.androidnewsgroupreader.Models;
 import com.freeteam01.androidnewsgroupreader.BuildConfig;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
+import org.apache.commons.net.util.Base64;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -16,8 +18,10 @@ public class NewsGroupArticle {
     private String id;
     private String articleID;
     private String subject;
-    private String date;
     private String from;
+    private String subject_string;
+    private Author author;
+    private Date date;
     private NewsGroupEntry group;
     private String text;
     private boolean isRead;
@@ -28,8 +32,9 @@ public class NewsGroupArticle {
         this.articleID = articleId;
         this.group = group;
         this.subject = subject;
-        this.date = date;
-        this.from = from;
+        this.author = new Author(from);
+        this.subject_string = convertToEncoding(subject);
+        this.date = new Date(date);
         this.isRead = false;
     }
 
@@ -46,8 +51,36 @@ public class NewsGroupArticle {
     }
 
     public String getSubjectString() {
-        if (subject.startsWith("=?UTF-8?Q?")) {
-            String subject_cut = subject.replace("=?UTF-8?Q?", "");
+        return subject_string;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public List<String> getReferences() {
+        return references;
+    }
+
+    public Author getAuthor(){
+        return author;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public boolean getRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        this.isRead = read;
+    }
+
+    private String convertToEncoding(String encoded_subject){
+        if (encoded_subject.contains("=?UTF-8?Q?")) {
+            String subject_cut = encoded_subject.replace("=?UTF-8?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
             ByteArrayOutputStream subject_bytes = new ByteArrayOutputStream();
             for (int i = 0; i < subject_cut.length(); i++) {
@@ -69,19 +102,15 @@ public class NewsGroupArticle {
                 e.printStackTrace();
             }
         }
-        return subject;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public boolean getRead() {
-        return isRead;
-    }
-
-    public void setRead(boolean read) {
-        this.isRead = read;
+        else if(encoded_subject.contains("=?UTF-8?B?")){
+            int start_index = encoded_subject.indexOf("=?UTF-8?B?") + "=?UTF-8?B?".length() - 1;
+            String subject_cut = encoded_subject.substring(start_index, encoded_subject.length()-1);
+            byte[] valueDecoded= Base64.decodeBase64(subject_cut.getBytes());
+            return new String(valueDecoded);
+        }
+        else
+            return encoded_subject;
+        return null;
     }
 
     public boolean hasUnreadChildren() {
@@ -92,14 +121,6 @@ public class NewsGroupArticle {
             }
         }
         return false;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public List<String> getReferences() {
-        return references;
     }
 
     public HashMap<String, NewsGroupArticle> getChildren() {

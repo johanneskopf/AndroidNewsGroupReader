@@ -2,10 +2,14 @@ package com.freeteam01.androidnewsgroupreader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +18,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -36,6 +42,8 @@ import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 import com.microsoft.windowsazure.mobileservices.MobileServiceActivityResult;
 
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     ListView post_list_view_;
     PostViewAdapter post_view_adapter_;
     ProgressBar progressBar_;
+    FloatingActionButton articleBtn_;
+    TextView tvError_;
+    String socket_error_msg_ = "";
     private String selected_newsgroup_;
     private String selected_server_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
@@ -118,6 +129,24 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         server_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         newsgroupsserver_spinner_.setAdapter(server_spinner_adapter_);
         progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
+        articleBtn_ = (FloatingActionButton) findViewById(R.id.btn_add_article);
+        tvError_ = (TextView) findViewById(R.id.tv_errors);
+
+
+        //        AzureService.getInstance().addAzureServiceEventListener(this);
+        Log.d("AzureService", "MainActivity subscribed to AzureEvent");
+//        if (AzureService.getInstance().isAzureServiceEventFired()) {
+//            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
+//            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+//        }
+
+        if (!AzureService.isInitialized())
+        {
+            Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
+            AzureService.Initialize(this);
+        }
+
+
         showNewsgroupServers();
 
         newsgroupsserver_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -162,13 +191,58 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             }
         });
 
+        articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                if(selected_newsgroup_ != null) {
+                    Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
+                    articleBtn_.startAnimation(ranim);
+
+                    ranim.setAnimationListener(new Animation.AnimationListener() {
+
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            if(isOnline() && socket_error_msg_.length() == 0) {
+                                Intent launch = new Intent(MainActivity.this, AddArticleActivity.class);
+                                Bundle b = new Bundle();
+                                b.putString("mode", "post");
+                                b.putString("server", selected_server_);
+                                b.putString("group", selected_newsgroup_);
+                                launch.putExtras(b);
+                                tvError_.setVisibility(View.INVISIBLE);
+                                tvError_.setText("");
+                                startActivityForResult(launch, 0);
+                            }
+                            else{
+                                String error_msg = isOnline() ? socket_error_msg_ : "No Internet connection";
+                                Log.d("MA animation", error_msg);
+                                tvError_.setText(error_msg);
+                                tvError_.setVisibility(View.VISIBLE);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
         if (!AzureService.isInitialized()) {
             Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
             AzureService.Initialize(this);
         }
+
     }
 
     private void showNewsGroupArticles() {
+        if(selected_server_ == null)
+            return;
         final NewsGroupServer server = RuntimeStorage.instance().getNewsgroupServer(selected_server_);
         AsyncTask<NewsGroupServer, Void, Void> task = new SpinnerAsyncTask<NewsGroupServer, Void, Void>(this) {
             @Override
@@ -176,11 +250,22 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 super.doInBackground(params);
                 for (NewsGroupServer server : params) {
                     try {
+                        socket_error_msg_ = "";
                         if (server == null)
                             return null;
                         server.reload();
                         server.reload(selected_newsgroup_);
-                    } catch (IOException e) {
+                    } catch (SocketException e) {
+                        Log.d("MA", "Connection to server timed out");
+                        socket_error_msg_ = "Connection to server timed out";
+                        e.printStackTrace();
+                    } catch (UnknownHostException e){
+                        Log.d("MA", "Unknown Host");
+                        socket_error_msg_ = "Unknown Host";
+                        e.printStackTrace();
+                    } catch (IOException e){
+                        Log.d("MA", "Connection could not be established");
+                        socket_error_msg_ = "Connection could not be established";
                         e.printStackTrace();
                     }
                 }
@@ -190,15 +275,33 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             protected void onPostExecute(Void aVoid) {
                 post_view_adapter_.clear();
-                if (selected_server_ != null && selected_newsgroup_ != null) {
+                
+                if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
                     NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
                     post_view_adapter_.addAll(ng.getArticles());
+                    post_view_adapter_.notifyDataSetChanged();
+                    tvError_.setVisibility(View.INVISIBLE);
+                    tvError_.setText("");;
                 }
-                post_view_adapter_.notifyDataSetChanged();
+                else if((socket_error_msg_.length() > 0) || !isOnline()){
+                    socket_error_msg_ = isOnline() == false ? "No Internet connection" : socket_error_msg_;
+                    Log.d("MA", socket_error_msg_);
+                    tvError_.setText(socket_error_msg_);
+                    tvError_.setVisibility(View.VISIBLE);
+                }
+                else{
+                    throw new IllegalStateException();
+                }
                 super.onPostExecute(aVoid);
             }
         };
         task.execute(server);
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     private void showNewsgroupServers() {

@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class NewsGroupServiceTests {
@@ -80,21 +79,42 @@ public class NewsGroupServiceTests {
         service.Disconnect();
     }
 
-    @Ignore("Don't spam the NG") @Test
-    public void postToTestNG() throws Exception {
+    @Test
+    public void checkAnswerMessage() throws Exception {
+        String reference_message =  "From: TestUsername <TestUsermail>\n" +
+                                    "Newsgroups: tu-graz.flames\n" +
+                                    "Subject: Test subject\n" +
+                                    "References: Previous_id Test_id\n" +
+                                    "\n" +
+                                    "Test message";
+
         NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
         NewsGroupService service = new NewsGroupService(ngServer);
-        service.Connect();
 
-        NewsGroupPostArticle article = new NewsGroupPostArticle(
-                "Test <test@test.com>",
-                "Re: Just testing",
-                "This is just a test");
+        List<String> refs = new ArrayList<>();
+        refs.add("Previous_id");
 
-        article.addNewsgroupToPostTo("tu-graz.test");
-        article.addReference("<ogh046$fdb$1@news.tugraz.at>");
+        String test_answer = service.constructNNTPMessage("TestUsername", "TestUsermail",
+                "Test message", "Test subject", "tu-graz.flames", "Test_id", refs);
 
-        service.postArticle(article);
+        assertTrue(test_answer.equals(reference_message));
+    }
 
-        service.Disconnect();
-    }}
+    @Test
+    public void checkPostMessage() throws Exception {
+        String reference_message =  "From: TestUsername <TestUsermail>\n" +
+                                    "Newsgroups: tu-graz.flames\n" +
+                                    "Subject: Test subject\n" +
+                                    "\n" +
+                                    "Test message";
+
+        NewsGroupServer ngServer = new NewsGroupServer("news.tugraz.at");
+        NewsGroupService service = new NewsGroupService(ngServer);
+
+        String test_post = service.constructNNTPMessage("TestUsername", "TestUsermail",
+                "Test message", "Test subject", "tu-graz.flames", null, null);
+
+        assertTrue(test_post.equals(reference_message));
+    }
+
+}

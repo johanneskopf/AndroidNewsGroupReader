@@ -1,5 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Services;
 
+import android.util.Log;
+
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
@@ -12,7 +14,9 @@ import org.apache.commons.net.nntp.SimpleNNTPHeader;
 
 import java.io.IOException;
 import java.io.Reader;
+
 import java.nio.charset.StandardCharsets;
+
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,41 +85,97 @@ public class NewsGroupService {
     }
 
     public String getArticleText(String id) throws IOException {
-        Reader r = client.retrieveArticle(id);
+        Reader r = client.retrieveArticleBody(id);
+
         String article_text = "";
         int value;
         while((value = r.read()) != -1){
             article_text += (char) value;
         }
-        final String border = "\r\n\r\n";
-        article_text = article_text.substring(article_text.indexOf(border) + border.length());
-        return new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
+
+        byte[] article_bytes = article_text.getBytes();
+
+        return new String(article_bytes, "UTF-8");
     }
 
-    public void postArticle(NewsGroupPostArticle article) throws IOException {
-        if(!client.isAllowedToPost())
-            throw new IOException("Client is not allowed to post to NG");
+    public boolean post(String user_name, String user_mail, String article_text,
+                        String subject, String group){
+        try {
+            if(!client.isAllowedToPost())
+                throw new IOException("Client is not allowed to post to NG");
 
-        Writer writer = client.postArticle();
-        if(writer == null)
-            throw new IOException("Couldn't get a Writer");
+            Writer writer = client.postArticle();
+            if(writer == null) { // failure
+                Log.d("NGS", "writer is null");
+                return false;
+            }
 
-        SimpleNNTPHeader header = new SimpleNNTPHeader(article.getFrom(), article.getSubject());
+            writer.write(constructNNTPMessage(user_name, user_mail, article_text, subject,
+                    group, null, null));
 
-        for (String newsgroup : article.getNewsgroups()) {
-            header.addNewsgroup(newsgroup);
+            writer.close();
+            if(!client.completePendingCommand()) { // failure
+                Log.d("NGS", "pending is false");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-
-        StringBuilder references = new StringBuilder();
-        for (String reference : article.getReferences()) {
-            references.append(reference + " ");
-        }
-        header.addHeaderField("References", references.toString());
-
-        writer.write(header.toString());
-        writer.write(article.getMessage());
-        writer.close();
-        if(!client.completePendingCommand())
-            throw new IOException("Post couldn't be finished");
+        return true;
     }
+
+    public boolean answer(String user_name, String user_mail, String article_text, String subject,
+                          String group, String article_id, List<String> references){
+        try {
+            if(!client.isAllowedToPost())
+                throw new IOException("Client is not allowed to post to NG");
+
+            Writer writer = client.postArticle();
+            if(writer == null) { // failure
+                Log.d("NGS", "writer is null");
+                return false;
+            }
+
+            writer.write(constructNNTPMessage(user_name, user_mail, article_text, subject, group,
+                    article_id, references));
+
+            writer.close();
+            if(!client.completePendingCommand()) { // failure
+                Log.d("NGS", "pending is false");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public String constructNNTPMessage(String user_name, String user_mail, String article_text,
+                                       String subject, String group, String article_id,
+                                       List<String> references){
+        //TODO: insert user credentials here
+        SimpleNNTPHeader nntp_header = new SimpleNNTPHeader(user_name +  " <" + user_mail + ">", subject);
+        //nntp_header.addNewsgroup(group);
+        nntp_header.addNewsgroup(group);
+
+        //System.out.println(references);
+        if(references != null) {
+            String nntp_reference = "";
+
+            if (references.size() != 0) {
+                for (String reference : references) {
+                    nntp_reference += reference + " ";
+                }
+            }
+
+            nntp_reference += article_id;
+            nntp_header.addHeaderField("References", nntp_reference);
+        }
+        return nntp_header.toString() + new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
+    }
+
 }
