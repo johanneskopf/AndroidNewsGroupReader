@@ -46,6 +46,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void saveSettings() {
         emailView.setError(null);
+        forenameView.setError(null);
+        surnameView.setError(null);
 
         String email = emailView.getText().toString();
         String forename = forenameView.getText().toString();
@@ -53,6 +55,12 @@ public class SettingsActivity extends AppCompatActivity {
 
         if (TextUtils.isEmpty(email)) {
             emailView.setError(getString(R.string.error_field_required));
+        }
+        if (TextUtils.isEmpty(forename)) {
+            forenameView.setError(getString(R.string.error_field_required));
+        }
+        if (TextUtils.isEmpty(surname)) {
+            surnameView.setError(getString(R.string.error_field_required));
         }
 
         if (!TextUtils.isEmpty(email)) {
