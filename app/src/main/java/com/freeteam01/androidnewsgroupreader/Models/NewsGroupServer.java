@@ -11,11 +11,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeSet;
 
 public class NewsGroupServer {
     String name_;
     HashMap<String, NewsGroupEntry> newsgroups_ = new HashMap<>();
-    private HashSet<String> subscribed_ = new HashSet<>();
+    private TreeSet<String> subscribed_ = new TreeSet<>();
 
     public NewsGroupServer(String name) {
         this.name_ = name;
@@ -62,7 +63,7 @@ public class NewsGroupServer {
         }
     }
 
-    public HashSet<String> getSubscribed() {
+    public TreeSet<String> getSubscribed() {
         return subscribed_;
     }
 
