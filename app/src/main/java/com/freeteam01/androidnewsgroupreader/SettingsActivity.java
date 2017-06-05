@@ -63,7 +63,7 @@ public class SettingsActivity extends AppCompatActivity {
             surnameView.setError(getString(R.string.error_field_required));
         }
 
-        if (!TextUtils.isEmpty(email)) {
+        if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(forename) && !TextUtils.isEmpty(surname)) {
             UserSetting entry = new UserSetting(null, email, forename, surname);
             AzureService.getInstance().persist(entry);
             onBackPressed();
