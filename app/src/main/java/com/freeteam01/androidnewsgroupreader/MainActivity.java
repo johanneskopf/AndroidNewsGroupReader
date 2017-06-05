@@ -528,6 +528,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     protected void onResume() {
         showNewsGroupArticles();
+        showSubscribedNewsgroupsAndArticles();
         showNewsgroupServers();
         super.onResume();
     }
