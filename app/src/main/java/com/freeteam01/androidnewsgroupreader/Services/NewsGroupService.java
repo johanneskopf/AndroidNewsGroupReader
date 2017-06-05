@@ -90,9 +90,7 @@ public class NewsGroupService {
             article_text += (char) value;
         }
 
-        byte[] article_bytes = article_text.getBytes();
-
-        return new String(article_bytes, "UTF-8");
+        return new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
     }
 
     public boolean post(String user_name, String user_mail, String article_text,
