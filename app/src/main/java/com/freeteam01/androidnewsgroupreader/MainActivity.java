@@ -263,6 +263,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 hideOption(R.id.action_logout);
                 showOption(R.id.action_login);
                 createAndShowDialog("Successfully logged out", "Success");
+                finish();
+                System.exit(0);
                 return true;
             case R.id.action_login:
                 AzureService.getInstance().authenticate();

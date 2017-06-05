@@ -8,7 +8,7 @@ import android.util.Log;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
-import com.freeteam01.androidnewsgroupreader.Models.ToDoItem;
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ToDoItem;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
