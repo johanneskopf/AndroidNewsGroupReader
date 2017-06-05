@@ -4,17 +4,20 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_opt"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_opt"
+        android:screenOrientation="portrait"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-        android:screenOrientation="portrait">
+        android:theme="@style/AppTheme">
 
 
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -24,27 +27,35 @@
                 android:resource="@menu/searchable">
             </meta-data>
         </activity>
-        <activity android:name=".SubscribeActivity" android:label="@string/subscribe"
-            android:theme="@style/Base.V21.Theme.AppCompat.Light" />
-        <activity android:name=".PostActivity" android:label="Post"
-            android:theme="@style/Base.V21.Theme.AppCompat.Light" />
-        <activity android:name=".LoginActivity" android:label="@string/title_activity_login"
-            android:theme="@style/AppTheme" />
-        <activity android:name=".RegisterActivity" android:label="@string/title_activity_register"
-            android:theme="@style/AppTheme" />
         <activity
-            android:name="com.microsoft.windowsazure.mobileservices.authentication.RedirectUrlActivity">
+            android:name=".SubscribeActivity"
+            android:label="@string/subscribe" />
+        <activity
+            android:name=".PostActivity"
+            android:label="Post" />
+        <activity
+            android:name=".LoginActivity"
+            android:label="@string/title_activity_login" />
+        <activity
+            android:name=".RegisterActivity"
+            android:label="@string/title_activity_register" />
+        <activity android:name="com.microsoft.windowsazure.mobileservices.authentication.RedirectUrlActivity"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:host="easyauth.callback" android:scheme="fakenewsapptestapp" />
+
+                <data
+                    android:host="easyauth.callback"
+                    android:scheme="fakenewsapptestapp" />
             </intent-filter>
         </activity>
         <activity
             android:name=".AddArticleActivity"
-            android:theme="@style/Theme.Transparent"
-            android:label="" />
+            android:label=""
+            android:theme="@style/Theme.Transparent" />
     </application>
 
 </manifest>

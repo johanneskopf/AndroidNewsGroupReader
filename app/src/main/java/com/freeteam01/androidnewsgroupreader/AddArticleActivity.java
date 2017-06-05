@@ -1,19 +1,10 @@
 package com.freeteam01.androidnewsgroupreader;
 
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableStringBuilder;
-import android.text.style.CharacterStyle;
-import android.text.style.StyleSpan;
-import android.text.style.UnderlineSpan;
 import android.util.Log;
-import android.view.ActionMode;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -28,9 +19,6 @@ import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Created by christian on 31.05.17.
- */
 
 public class AddArticleActivity extends AppCompatActivity {
 
@@ -199,63 +187,5 @@ public class AddArticleActivity extends AppCompatActivity {
             }
         }
         et_post_.setText(mod_text);
-    }
-
-    private class StyleCallback implements android.view.ActionMode.Callback {
-
-        @Override
-        public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
-            Log.d("FORMAT", "onCreateActionMode");
-            MenuInflater inflater = mode.getMenuInflater();
-            inflater.inflate(R.menu.menu_selection, menu);
-            return true;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
-            return false;
-        }
-
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            Log.d("FORMAT", String.format("onActionItemClicked item=%s/%d", item.toString(), item.getItemId()));
-            CharacterStyle cs;
-            int start = et_post_.getSelectionStart();
-            int end = et_post_.getSelectionEnd();
-            if (start == -1 || end == -1) {
-                return false;
-            }
-            SpannableStringBuilder ssb = new SpannableStringBuilder(et_post_.getText());
-            for (StyleSpan s : ssb.getSpans(start, end, StyleSpan.class)) {
-                ssb.removeSpan(s);
-            }
-
-            switch (item.getItemId()) {
-
-                case R.id.bold:
-                    cs = new StyleSpan(Typeface.BOLD);
-                    ssb.setSpan(cs, start, end, 1);
-                    et_post_.setText(ssb);
-                    return true;
-
-                case R.id.italic:
-                    cs = new StyleSpan(Typeface.ITALIC);
-                    ssb.setSpan(cs, start, end, 1);
-                    et_post_.setText(ssb);
-                    return true;
-
-                case R.id.underline:
-                    cs = new UnderlineSpan();
-                    ssb.setSpan(cs, start, end, 1);
-                    et_post_.setText(ssb);
-                    return true;
-            }
-            return false;
-        }
-
-        @Override
-        public void onDestroyActionMode(android.view.ActionMode mode) {
-
-        }
     }
 }

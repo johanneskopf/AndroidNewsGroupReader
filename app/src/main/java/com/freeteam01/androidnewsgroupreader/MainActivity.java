@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 if (result.isLoggedIn()) {
                     // login succeeded
                     Log.d("AzureService", "LoginActivity - login succeeded");
-                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
+//                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
 //                    createTable();
                     AzureService.getInstance().OnAuthenticated();
 
@@ -145,15 +145,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-//        Intent launch = new Intent(MainActivity.this, LoginActivity.class);
-//        startActivityForResult(launch, 0);
-
+        setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_main);
-
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
+        super.onCreate(savedInstanceState);
 
         newsgroupsserver_spinner_ = (Spinner) findViewById(R.id.newsgroupsserver_spinner);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
@@ -332,7 +326,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 return null;
             }
 
-            @Override
             protected void onPostExecute(Void aVoid) {
                 if (selected_server_ != null && selected_newsgroup_ != null && (socket_error_msg_.length() == 0) && isOnline()) {
                     NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
@@ -355,7 +348,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         };
         task.execute(server);
     }
-
 
     public boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
