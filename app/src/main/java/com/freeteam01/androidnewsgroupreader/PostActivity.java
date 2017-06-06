@@ -247,10 +247,17 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         }
 
         void formatQuote(SpannableStringBuilder finalstring) {
-            Pattern boldRegex = Pattern.compile("^(>+)(.*)$", Pattern.MULTILINE);
+            Pattern boldRegex = Pattern.compile("^([ *>]+)(.*)$", Pattern.MULTILINE);
             Matcher matcher = boldRegex.matcher(finalstring);
             while (matcher.find()) {
-                finalstring.setSpan(new BorderedSpan(matcher.end(1) - matcher.start(1)), matcher.start(2), matcher.end(2), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                String quoteString = finalstring.subSequence(matcher.start(1), matcher.end(1)).toString();
+                int counter = 0;
+                for( int i=0; i<quoteString.length(); i++ ) {
+                    if( quoteString.charAt(i) == '>' ) {
+                        counter++;
+                    }
+                }
+                finalstring.setSpan(new BorderedSpan(counter), matcher.start(2), matcher.end(2), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
             matcher.reset();
