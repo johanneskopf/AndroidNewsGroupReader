@@ -308,8 +308,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 for (NewsGroupServer server : params) {
                     try {
                         socket_error_msg_ = "";
-                        if (server == null)
-                            return null;
                         server.reload();
                         server.reload(selected_newsgroup_);
                     } catch (SocketException e) {
