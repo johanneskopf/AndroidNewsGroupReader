@@ -1,10 +1,23 @@
 package com.freeteam01.androidnewsgroupreader;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.method.ScrollingMovementMethod;
+import android.text.style.ReplacementSpan;
+import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
@@ -23,6 +36,10 @@ import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static android.R.attr.level;
 
 
 public class PostActivity extends AppCompatActivity implements ISpinnableActivity {
@@ -35,11 +52,11 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
     ListView tree_list_view_;
     List<NewsGroupArticle> articles_ = new ArrayList<>();
     List<NewsGroupArticle> flat_ = new ArrayList<>();
+    String article_text_;
     private NewsGroupArticle article_;
     private AtomicInteger background_jobs_count = new AtomicInteger();
     private ProgressBar progressBar_;
     private FloatingActionButton articleBtn_;
-    String article_text_;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,8 +97,8 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
 
         articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
             @Override
-            public void onClick(View v){
-                if(article_ != null) {
+            public void onClick(View v) {
+                if (article_ != null) {
                     Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
                     articleBtn_.startAnimation(ranim);
 
@@ -106,7 +123,8 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
                             b.putString("article_text", article_text_);
                             b.putString("article_subject", article_.getSubjectString());
                             launch.putExtras(b);
-                            startActivityForResult(launch, 0);                        }
+                            startActivityForResult(launch, 0);
+                        }
                     });
 
                 }
@@ -181,12 +199,154 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
 
         protected void onPostExecute(String article_text) {
             super.onPostExecute(article_text);
-            article_text_text_view_.setText(article_text);
+//            article_text_text_view_.setText(article_text);
             article_text_ = article_text;
+            setFormatedArticleText(article_text);
             from_text_text_view_.setText(article_.getAuthor().getNameString());
             date_text_text_view_.setText(article_.getDate().getDateString());
             article_name_text_text_view_.setText(article_.getSubjectString());
         }
+
+
+        void setFormatedArticleText(String articleText) {
+
+            SpannableStringBuilder finalstring = new SpannableStringBuilder(articleText);
+
+            formatSpanBold(finalstring);
+            formatSpanUnderline(finalstring);
+            formatSpanItalic(finalstring);
+            formatQuote(finalstring);
+            formatEmoji(finalstring);
+
+
+            article_text_text_view_.setText(finalstring);
+        }
+        //http://apps.timwhitlock.info/emoji/tables/unicode
+        private void formatEmoji(SpannableStringBuilder finalstring) {
+            emojiFromTo(finalstring, ":) :-)", 0x1F603);
+            emojiFromTo(finalstring, ";) ;-)", 0x1F609);
+            emojiFromTo(finalstring, ":P :-P", 0x1F61C);
+        }
+
+        private void emojiFromTo(SpannableStringBuilder finalstring, String emoji, int unicode)
+        {
+            for(String e : emoji.split(" "))
+            {
+                String emojiEscaped = Pattern.quote(e);
+                Pattern boldRegex = Pattern.compile("(" +emojiEscaped+")");
+                Matcher matcher = boldRegex.matcher(finalstring);
+                while (matcher.find()) {
+                    finalstring.replace(matcher.start(1), matcher.end(1), getEmojiByUnicode(unicode));
+                    matcher = boldRegex.matcher(finalstring);
+                }
+            }
+        }
+
+        private String getEmojiByUnicode(int unicode){
+            return new String(Character.toChars(unicode));
+        }
+
+        void formatQuote(SpannableStringBuilder finalstring) {
+            Pattern boldRegex = Pattern.compile("^([ *>]+)(.*)$", Pattern.MULTILINE);
+            Matcher matcher = boldRegex.matcher(finalstring);
+            while (matcher.find()) {
+                String quoteString = finalstring.subSequence(matcher.start(1), matcher.end(1)).toString();
+                int counter = 0;
+                for( int i=0; i<quoteString.length(); i++ ) {
+                    if( quoteString.charAt(i) == '>' ) {
+                        counter++;
+                    }
+                }
+                finalstring.setSpan(new BorderedSpan(counter), matcher.start(2), matcher.end(2), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
+            matcher.reset();
+            while (matcher.find()) {
+                finalstring.delete(matcher.start(1), matcher.end(1));
+                matcher = boldRegex.matcher(finalstring);
+            }
+        }
+
+        void formatSpanItalic(SpannableStringBuilder finalstring) {
+            Pattern italicRegex = Pattern.compile("\\/(.*?)\\/");
+            Matcher matcher = italicRegex.matcher(finalstring);
+            if (matcher.find()) {
+                for (int i = 0; i < matcher.groupCount(); i++) {
+                    finalstring.setSpan(new StyleSpan(Typeface.ITALIC), matcher.start(i), matcher.end(i), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+        }
+
+        void formatSpanUnderline(SpannableStringBuilder finalstring) {
+            Pattern underlineRegex = Pattern.compile("\\_(.*?)\\_");
+            Matcher matcher = underlineRegex.matcher(finalstring);
+            if (matcher.find()) {
+                for (int i = 0; i < matcher.groupCount(); i++) {
+                    finalstring.setSpan(new UnderlineSpan(), matcher.start(i), matcher.end(i), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+        }
+
+        void formatSpanBold(SpannableStringBuilder finalstring) {
+            Pattern boldRegex = Pattern.compile("\\*(.*?)\\*");
+            Matcher matcher = boldRegex.matcher(finalstring);
+            if (matcher.find()) {
+                for (int i = 0; i < matcher.groupCount(); i++) {
+                    finalstring.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(i), matcher.end(i), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+        }
+
+        public class BorderedSpan extends ReplacementSpan {
+            final Paint mPaintBorder;
+            private final int levels;
+            int mWidth;
+            int borderWidth = 5;
+            int distance = 15;
+
+            public BorderedSpan(int levels) {
+                mPaintBorder = new Paint();
+                mPaintBorder.setStyle(Paint.Style.STROKE);
+                mPaintBorder.setStrokeWidth(borderWidth);
+                mPaintBorder.setAntiAlias(true);
+                this.levels = levels;
+            }
+
+
+            @Override
+            public int getSize(Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
+                mWidth = (int) paint.measureText(text, start, end);
+                return mWidth;
+            }
+
+            @Override
+            public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
+                for (int j = 0; j < levels; j++) {
+                    int color = Color.RED;
+                    switch (j % 5) {
+                        case 0:
+                            color = Color.BLUE;
+                            break;
+                        case 1:
+                            color = Color.RED;
+                            break;
+                        case 2:
+                            color = Color.GREEN;
+                            break;
+                        case 3:
+                            color = Color.CYAN;
+                            break;
+                        case 4:
+                            color = Color.MAGENTA;
+                            break;
+                    }
+                    mPaintBorder.setColor(color);
+                    canvas.drawLine(borderWidth + x + distance * j, top, borderWidth + x + distance * j, bottom, mPaintBorder);
+                }
+                canvas.drawText(text, start, end, x + distance * levels, y, paint);
+            }
+        }
+
     }
 
 }
