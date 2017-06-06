@@ -23,6 +23,7 @@ import android.widget.CheckBox;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +42,7 @@ import java.util.List;
 
 public class SubscribeActivity extends AppCompatActivity implements AzureServiceEvent, SearchView.OnQueryTextListener {
     private NewsGroupAdapter adapter;
+    private ProgressBar progressBar;
     private Spinner server_spinner;
     private String server;
     private ArrayList<NewsGroupEntry> items;
@@ -69,6 +71,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
         items = new ArrayList<>();
         adapter = new NewsGroupAdapter(this, items); //R.layout.entry_info
         listView.setAdapter(adapter);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         server_spinner = (Spinner) findViewById(R.id.spin_server);
         server_spinner_adapter_ = new NewsgroupServerSpinnerAdapter(this, new ArrayList<String>());
@@ -143,6 +146,12 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
             protected Void doInBackground(Void... params) {
                 if (server == null)
                     return null;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(View.VISIBLE);
+                    }
+                });
                 try {
                     RuntimeStorage.instance().getNewsgroupServer(server).reload();
                 } catch (IOException e) {
@@ -158,6 +167,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        progressBar.setVisibility(View.GONE);
 //                        List newsgroups = new ArrayList(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
 //                        Collections.sort(newsgroups);
                         adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
