@@ -1,6 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
+import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -69,6 +70,8 @@ public class NewsGroupEntry {
             } else {
                 //TODO Update logic
             }
+
+            article.setRead(RuntimeStorage.instance().isRead(article.getArticleID()));
         }
         service.Disconnect();
     }

@@ -8,6 +8,7 @@ import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.Server;
@@ -201,6 +202,7 @@ public class AzureService {
                     final List<ReadArticle> storedReadArticleEntries = getLocalData(ReadArticle.class, readArticleTable);
                     readArticles.clear();
                     readArticles.addAll(storedReadArticleEntries);
+                    RuntimeStorage.instance().setReadArticles(storedReadArticleEntries);
                     final List<UserSetting> storedUserSettingEntries = getLocalData(UserSetting.class, userSettingTable);
                     userSettings.clear();
                     userSettings.addAll(storedUserSettingEntries);
@@ -249,6 +251,7 @@ public class AzureService {
                     final List<ReadArticle> storedReadArticleEntries = syncData(ReadArticle.class, readArticleTable);
                     readArticles.clear();
                     readArticles.addAll(storedReadArticleEntries);
+                    RuntimeStorage.instance().setReadArticles(storedReadArticleEntries);
                     final List<UserSetting> storedUserSettingEntries = syncData(UserSetting.class, userSettingTable);
                     userSettings.clear();
                     userSettings.addAll(storedUserSettingEntries);
@@ -523,5 +526,12 @@ public class AzureService {
         } else cookieManager.removeAllCookie();
         cacheUserToken(null);
         client.logout();
+    }
+
+    public void readArticleChanged(NewsGroupArticle newsGroupArticle) {
+        if(newsGroupArticle.getRead())
+        {
+            persist(new ReadArticle(newsGroupArticle.getArticleID(), getClient().getCurrentUser().getUserId()));
+        }
     }
 }

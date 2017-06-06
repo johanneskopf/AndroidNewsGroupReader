@@ -32,6 +32,7 @@ import com.freeteam01.androidnewsgroupreader.Adapter.PostViewAdapter;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
+import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.freeteam01.androidnewsgroupreader.Other.ArticleSorter;
 import com.freeteam01.androidnewsgroupreader.Other.ISpinnableActivity;
@@ -101,15 +102,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                     // login succeeded
                     Log.d("AzureService", "LoginActivity - login succeeded");
                     createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
+
                     AzureService.getInstance().OnAuthenticated();
 
-                    Log.d("AzureService", "MainActivity - AzureService.getInstance()");
-                    AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, this);
-                    Log.d("AzureService", "MainActivity subscribed to AzureEvent");
-                    if (AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class)) {
-                        OnLoaded(SubscribedNewsgroup.class, AzureService.getInstance().getSubscribedNewsgroups());
-                        Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
-                    }
 
                     if (menu != null) {
                         showOption(R.id.action_settings);
@@ -167,6 +162,20 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         if (!AzureService.isInitialized()) {
             Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
             AzureService.Initialize(this);
+//            Log.d("AzureService", "MainActivity - AzureService.getInstance()");
+//            AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, this);
+//            Log.d("AzureService", "MainActivity subscribed to AzureEvent");
+//            if (AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class)) {
+//                OnLoaded(SubscribedNewsgroup.class, AzureService.getInstance().getSubscribedNewsgroups());
+//                Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
+//            }
+//
+//
+//            AzureService.getInstance().addAzureServiceEventListener(ReadArticle.class, this);
+//            if (AzureService.getInstance().isAzureServiceEventFired(ReadArticle.class)) {
+//                OnLoaded(ReadArticle.class, AzureService.getInstance().getReadArticles());
+//            }
+//            AzureService.getInstance().authenticate();
         }
 
 
@@ -474,7 +483,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     public <T> void OnLoaded(Class<T> classType, List<T> entries) {
         Log.d("AzureService", "MainActivity.OnLoaded: " + classType.getSimpleName());
-        if (classType == SubscribedNewsgroup.class) {
+        if (classType == SubscribedNewsgroup.class || classType == ReadArticle.class) {
             showSubscribedNewsgroupsAndArticles();
         }
     }
@@ -524,8 +533,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     @Override
     protected void onResume() {
         showNewsGroupArticles();
-        showSubscribedNewsgroupsAndArticles();
         showNewsgroupServers();
+        showSubscribedNewsgroupsAndArticles();
         super.onResume();
     }
 
