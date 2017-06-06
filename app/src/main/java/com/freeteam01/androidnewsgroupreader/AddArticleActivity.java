@@ -129,7 +129,8 @@ public class AddArticleActivity extends AppCompatActivity {
                 for (NewsGroupServer server : params) {
                     try {
                         service.Connect();
-                        if(service.post("FakeNews", "a@a.com", post_text, post_subject, group)){
+                        if(service.post(RuntimeStorage.instance().getUserSetting().getForename() + " " + RuntimeStorage.instance().getUserSetting().getSurname()
+                                , RuntimeStorage.instance().getUserSetting().getEmail(), post_text, post_subject, group)){
                             Log.d("AAA", "posted");
                         }
                         service.Disconnect();
@@ -162,9 +163,8 @@ public class AddArticleActivity extends AppCompatActivity {
                 for (NewsGroupServer server : params) {
                     try {
                         service.Connect();
-                        //TODO insert user credentials
-                        if(service.answer("FakeNews", "a@a.com", post_text, post_subject, group, article, references)){
-                            Log.d("AAA", "answered");
+                        if(service.answer(RuntimeStorage.instance().getUserSetting().getForename() + " " + RuntimeStorage.instance().getUserSetting().getSurname()
+                                , RuntimeStorage.instance().getUserSetting().getEmail(), post_text, post_subject, group, article, references)){
                         }
                         service.Disconnect();
                     } catch (IOException e) {
