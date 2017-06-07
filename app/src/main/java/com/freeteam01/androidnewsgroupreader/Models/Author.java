@@ -18,10 +18,6 @@ public class Author {
         splitAndSetAuthorInfo();
     }
 
-    public String getForname(){
-        return forname;
-    }
-
     public String getSurname(){
         return surname;
     }
@@ -30,17 +26,10 @@ public class Author {
         return name_string;
     }
 
-    public boolean onlyAlias(){
-        return only_alias;
-    }
-
     public String getEmail(){
         return e_mail;
     }
 
-    public String getFromString(){
-        return from_input_string;
-    }
 
     private void splitAndSetAuthorInfo(){
         Pattern p = Pattern.compile("[^(<)]*");

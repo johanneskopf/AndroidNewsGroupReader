@@ -25,52 +25,12 @@ public class PostDate {
         this.date = new GregorianCalendar(year, month, day, hours, minutes, seconds);
     }
 
-    public String getDateInputString(){
-        return date_input_string;
-    }
-
-    public String getTimezone(){
-        return timezone;
-    }
-
     public String getDateString(){
         return date_string;
     }
 
     public GregorianCalendar getDate(){
         return date;
-    }
-
-    public String getWeekday(){
-        return weekday;
-    }
-
-    public int getDay(){
-        return day;
-    }
-
-    public String getMonthString(){
-        return month_string;
-    }
-
-    public int getMonth(){
-        return month;
-    }
-
-    public int getYear(){
-        return year;
-    }
-
-    public int getHours(){
-        return hours;
-    }
-
-    public int getMinutes(){
-        return minutes;
-    }
-
-    public int getSeconds(){
-        return seconds;
     }
 
     private void splitAndSetDateAndTimezone(){
