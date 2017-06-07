@@ -99,7 +99,7 @@ public class NewsGroupService {
                 return false;
 
             Writer writer = client.postArticle();
-            if (writer == null) { // failure
+            if (writer == null) {
                 Log.d("NGS", "writer is null");
                 return false;
             }
@@ -108,7 +108,7 @@ public class NewsGroupService {
                     group, null, null));
 
             writer.close();
-            if (!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) {
                 Log.d("NGS", "pending is false");
                 return false;
             }
@@ -125,7 +125,7 @@ public class NewsGroupService {
                 return false;
 
             Writer writer = client.postArticle();
-            if (writer == null) { // failure
+            if (writer == null) {
                 Log.d("NGS", "writer is null");
                 return false;
             }
@@ -134,7 +134,7 @@ public class NewsGroupService {
                     articleId, references));
 
             writer.close();
-            if (!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) {
                 Log.d("NGS", "pending is false");
                 return false;
             }
@@ -148,7 +148,6 @@ public class NewsGroupService {
     public String constructNNTPMessage(String userName, String userMail, String articleText,
                                        String subject, String group, String articleId,
                                        List<String> references) {
-        //TODO: insert user credentials here
         SimpleNNTPHeader httpHeader = new SimpleNNTPHeader(userName + " <" + userMail + ">", subject);
         httpHeader.addNewsgroup(group);
         if (references != null) {

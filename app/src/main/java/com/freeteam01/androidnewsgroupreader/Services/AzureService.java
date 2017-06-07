@@ -124,8 +124,6 @@ public class AzureService {
     }
 
     public void OnAuthenticated() {
-        // only execute this if the login was successful
-
         cacheUserToken(client.getCurrentUser());
         readArticleTable = client.getSyncTable("ReadArticle", ReadArticle.class);
         serverTable = client.getSyncTable("Server", Server.class);
@@ -217,16 +215,7 @@ public class AzureService {
         }
         Log.d("AzureService", "loaded data from local storage");
 
-
-        // TODO: try to solve it with this runOnUiThread
-/*        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        });*/
         fireAzureServiceEvents();
-
 
         syncLocalWithRemote();
     }
@@ -261,18 +250,10 @@ public class AzureService {
             userSettings.clear();
             userSettings.addAll(storedUserSettingEntries);
             Log.d("AzureService", "synced items with remote");
-//                    fireAzureServiceEvent(newsGroupEntries);
         } catch (final Exception e) {
             Log.d("AzureService", "syncLocalWithRemote: " + e.getMessage());
         }
 
-        // TODO: try to solve it with this runOnUiThread
-/*        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        });*/
         fireAzureServiceEvents();
     }
 
@@ -373,7 +354,6 @@ public class AzureService {
 
             function.callback();
         } catch (final Exception e) {
-//            Log.d("AzureService", "initLocalStore: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -403,7 +383,6 @@ public class AzureService {
                 }
             }
             subscribedNewsgroupEntries.clear();
-            // TODO check if loadLocalData is good here
             loadLocalData();
             fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
             Log.d("AzureService", "subscribedNewsgroupEntries successful");
@@ -425,7 +404,6 @@ public class AzureService {
                 T addedEntry = addItemInTable(entry, table);
                 localEntries.add(addedEntry);
             }
-//                    fireAzureServiceEvent(classType, entries);
             Log.d("AzureService", "Entry of type " + classType + " persisted successfully");
         } catch (ExecutionException | InterruptedException e) {
             Log.d("AzureService", "persist: " + e.getMessage());
@@ -436,7 +414,6 @@ public class AzureService {
     private <T> void persistSingle(final Class<T> classType, final T entry, final List<T> localEntries, final MobileServiceSyncTable<T> table) {
         try {
             if (localEntries.size() > 0) {
-//                        T updateEntry = localEntries.get(0);
                 Log.d("AzureService", "Updating entry: " + entry.toString());
                 updateItemInTable(entry, table);
                 localEntries.set(0, entry);
@@ -446,7 +423,6 @@ public class AzureService {
                 Log.d("AzureService", "Added entry: " + addedEntry.toString());
                 localEntries.add(addedEntry);
             }
-//                    fireAzureServiceEvent(classType, entries);
             Log.d("AzureService", "Entry of type " + classType + " persisted successfully");
         } catch (ExecutionException | InterruptedException e) {
             Log.d("AzureService", "persist: " + e.getMessage());
@@ -484,7 +460,6 @@ public class AzureService {
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
-                // a callback which is executed when the cookies have been removed
                 @Override
                 public void onReceiveValue(Boolean aBoolean) {
                     Log.d("AzureService", "Cookie removed: " + aBoolean);

@@ -135,7 +135,6 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements F
             if (constraint != null && constraint.length() > 0) {
                 ArrayList<NewsGroupArticle> tempList = new ArrayList<NewsGroupArticle>();
 
-                // search content in friend list
                 for (NewsGroupArticle article : items) {
                     if (article.getSubjectString().toLowerCase().contains(constraint.toString().toLowerCase())) {
                         tempList.add(article);

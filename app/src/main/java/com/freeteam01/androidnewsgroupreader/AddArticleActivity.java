@@ -139,15 +139,6 @@ public class AddArticleActivity extends AppCompatActivity {
                 }
                 return null;
             }
-
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                /*post_view_adapter_.clear();
-                NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
-                post_view_adapter_.addAll(ng.getArticles());
-                post_view_adapter_.notifyDataSetChanged();
-                super.onPostExecute(aVoid);*/
-            }
         };
         task.execute(server);
     }
@@ -172,15 +163,6 @@ public class AddArticleActivity extends AppCompatActivity {
                     }
                 }
                 return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                /*post_view_adapter_.clear();
-                NewsGroupEntry ng = RuntimeStorage.instance().getNewsgroupServer(selected_server_).getNewsgroup(selected_newsgroup_);
-                post_view_adapter_.addAll(ng.getArticles());
-                post_view_adapter_.notifyDataSetChanged();
-                super.onPostExecute(aVoid);*/
             }
         };
         task.execute(server);

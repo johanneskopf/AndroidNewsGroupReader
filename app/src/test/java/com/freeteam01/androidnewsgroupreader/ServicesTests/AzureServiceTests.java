@@ -55,12 +55,10 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("com.example.LoggingClass")
-@PrepareForTest({MobileServiceClient.class}) //, CookieManager.class
+@PrepareForTest({MobileServiceClient.class})
 @MockPolicy(LogRedirection.class)
 public class AzureServiceTests {
 
-    private final String USERIDPREF = "uid";
-    private final String TOKENPREF = "tkn";
     @Mock
     Context context;
     @Mock
@@ -77,13 +75,11 @@ public class AzureServiceTests {
     SQLiteLocalStore localStore;
     @Mock
     SimpleSyncHandler syncHandler;
-
-/*    @Mock
-    CookieManager cookieManager;*/
     @Mock
     MobileServiceSyncTable mobileServiceSyncTable;
     @Mock
     MobileServiceUser mobileServiceUser;
+
     private String token = "12345-token";
     private String userId = "userId";
     private String serverId = "serverId";
@@ -96,15 +92,9 @@ public class AzureServiceTests {
 
     @Before
     public void before() throws Exception {
-        // mock all the statics
-//        PowerMockito.mockStatic(CookieManager.class);
-
-//        this.sharedPreferences = Mockito.mock(SharedPreferences.class);
         when(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPreferences).thenReturn(sharedPreferences);
         when(sharedPreferences.getString(anyString(), (String) isNull())).thenReturn(userId).thenReturn(token);
         when(sharedPreferences.edit()).thenReturn(editor);
-//        Mockito.when(new MobileServiceClient(any(String.class), any(Context.class)));
-//        Mockito.when(new MobileServiceClient(anyString(), context)).thenReturn(client);
         when(client.getSyncContext()).thenReturn(mobileServiceSyncContext);
         final SettableFuture<Void> result = SettableFuture.create();
         new Thread(new Runnable() {
@@ -295,31 +285,11 @@ public class AzureServiceTests {
 
     @Test
     public void test_readArticleChanged() {
-//        String serverName = "news.tugraz.at";
-//        NewsGroupServer newsGroupServer = new NewsGroupServer(serverName);
-//        int articleCount = 1;
-//        String name = "lv.algorithmen";
-//        NewsGroupEntry newsGroupEntry = new NewsGroupEntry(newsGroupServer, articleCount, name);
-//        String articleId = "12345", subject = "BubbleSort", date = "Wednesday 01 Jan 2017 10:10:10", from ="Miriam Musterfrau";
         NewsGroupArticle newsGroupArticle = mock(NewsGroupArticle.class); //new NewsGroupArticle(newsGroupEntry, articleId, subject, date, from);
         when(newsGroupArticle.getRead()).thenReturn(true);
         when(newsGroupArticle.getArticleID()).thenReturn("12345");
         final ReadArticle result = mock(ReadArticle.class);
-//        final ReadArticle readArticle = new ReadArticle(articleId, userId);
-//        final ReadArticle readArticleWithId = new ReadArticle(articleId, userId);
-//        readArticleWithId.setId(id);
         final SettableFuture<ReadArticle> resultReadArticle = SettableFuture.create();
-//        new Thread(new Runnable() {
-//
-//            @Override
-//            public void run() {
-//                try {
-//                    resultReadArticle.set(readArticle);
-//                } catch (Throwable throwable) {
-//                    resultReadArticle.setException(throwable);
-//                }
-//            }
-//        }).start();
         new Thread(new Runnable() {
 
             @Override
@@ -332,37 +302,20 @@ public class AzureServiceTests {
             }
         }).start();
         when(mobileServiceSyncTable.insert(any(ReadArticle.class))).thenReturn(resultReadArticle);
-//        try {
-//            assertThat(AzureService.getInstance().addItemInTable(readArticle, mobileServiceSyncTable), Matchers.<Object>is(readArticleWithId));
-//            assertEquals(AzureService.getInstance().addItemInTable(readArticle, mobileServiceSyncTable), readArticleWithId);
-        try
-        {
+        try {
             AzureService.getInstance().readArticleChanged(newsGroupArticle);
-            assert(false);
-        }
-        catch (Exception ex)
-        {
+            assert (false);
+        } catch (Exception ex) {
             //good
         }
-//        } catch (ExecutionException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        newsGroupArticle.setRead(true);
-
     }
 
     @Test
     public void test_logout() {
-//        CookieManager cookieManager = mock(CookieManager.class);
-//        when(CookieManager.get)
-//        Mockito.when(CookieManager.getInstance()).thenReturn(singleMock);
-        try
-        {
+        try {
             AzureService.getInstance().logout();
             assert (false);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
 
         }
     }
@@ -393,12 +346,10 @@ public class AzureServiceTests {
     @Test
     public void test_persistServer() {
         String url = "news.tugraz.at";
-//        final Server server = mock(Server.class);
         final Server server = new Server(name, url, userId);
 
-        try
-        {
-final SettableFuture<Server> result = SettableFuture.create();
+        try {
+            final SettableFuture<Server> result = SettableFuture.create();
             new Thread(new Runnable() {
 
                 @Override
@@ -412,9 +363,7 @@ final SettableFuture<Server> result = SettableFuture.create();
             }).start();
             when(mobileServiceSyncTable.insert(any(Server.class))).thenReturn(result);
             AzureService.getInstance().persist(server);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
 
         }
 
@@ -437,12 +386,9 @@ final SettableFuture<Server> result = SettableFuture.create();
             }
         }).start();
         when(mobileServiceSyncTable.insert(any(UserSetting.class))).thenReturn(result);
-        try
-        {
+        try {
             AzureService.getInstance().persist(userSetting);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
 
         }
     }
@@ -469,22 +415,17 @@ final SettableFuture<Server> result = SettableFuture.create();
             }).start();
             when(mobileServiceSyncTable.insert(any(NewsGroupEntry.class))).thenReturn(result);
             AzureService.getInstance().persistSubscribedNewsgroups(newsGroupEntries);
-        }
-        catch (Exception ex)
-        {
-            
+        } catch (Exception ex) {
         }
     }
 
-
     @Test
-    public void authtentification() {
+    public void authentication() {
         AzureService.getInstance().authenticate();
     }
 
     @Test
-    public void events()
-    {
+    public void events() {
         AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, new AzureServiceEvent() {
             @Override
             public <T> void OnLoaded(Class<T> classType, List<T> entries) {
@@ -507,23 +448,10 @@ final SettableFuture<Server> result = SettableFuture.create();
         toSubscribe.add(entry);
         toSubscribe.add(entry2);
 
-        AzureService.getInstance().persistSubscribedNewsgroups(toSubscribe);
-    }
+        try {
+            AzureService.getInstance().persistSubscribedNewsgroups(toSubscribe);
+        } catch (Exception ex) {
 
-    /*@Test
-    public void test_verify(){
-        MainActivity activity = Mockito.mock(MainActivity.class);
-        when(activity.getName()).thenReturn("MainActivity");
-        when(activity.getNumber(anyInt())).thenReturn(0);
-        //verify if getName() is never called
-        verify(activity,never()).getName();
-        //now call it one time
-        activity.getName();
-        //verify if it is called once
-        verify(activity,atLeastOnce()).getName();
-        //call getNumber method with a parameter
-        activity.getNumber(1);
-        //verify if getNumber was called with parameter 1
-        verify(activity).getNumber(1);
-    }*/
+        }
+    }
 }
