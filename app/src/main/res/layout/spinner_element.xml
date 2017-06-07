@@ -4,13 +4,12 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/tv_post"
-        android:layout_width="match_parent"
+        android:id="@+id/tv_newsgroup"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
         android:paddingTop="8dp"
         android:text="TextView" />
-
 </LinearLayout>

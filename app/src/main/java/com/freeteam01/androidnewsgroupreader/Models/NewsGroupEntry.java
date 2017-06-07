@@ -1,31 +1,31 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
+import com.freeteam01.androidnewsgroupreader.Services.RuntimeStorage;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class NewsGroupEntry {
 
+    HashMap<String, NewsGroupArticle> articles = new HashMap<>();
     private String id;
-    private long articleCount = 0;
+    private int articleCount = 0;
     private String name = null;
-    private boolean selected = false;
+    private boolean subscribed = false;
+    private NewsGroupServer server = null;
 
-    public NewsGroupEntry(long articleCount, String name, boolean selected) {
+    public NewsGroupEntry(NewsGroupServer server, int articleCount, String name) {
         super();
+        this.server = server;
         this.articleCount = articleCount;
         this.name = name;
-        this.selected = selected;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public long getArticleCount() {
+    public int getArticleCount() {
         return articleCount;
-    }
-
-    public void setArticleCount(long articleCount) {
-        this.articleCount = articleCount;
     }
 
     public String getName() {
@@ -36,20 +36,52 @@ public class NewsGroupEntry {
         this.name = name;
     }
 
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected = selected;
+    public boolean isSubscribed() {
+        return subscribed;
     }
 
     @Override
     public int hashCode() {
-        /*int result = 17;
-        result = 31 * result + (int)articleCount;
-        result = 31 * result + Objects.hashCode(this.name);
-        return result;*/
         return Objects.hashCode(this.name);
+    }
+
+    public String toString() {
+        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.subscribed + "'" + "', id: '" + this.id + "'";
+    }
+
+    public void setSubscribed(boolean subscribed) {
+        this.subscribed = subscribed;
+    }
+
+    public void loadArticles() throws IOException {
+        NewsGroupService service = new NewsGroupService(server);
+        service.Connect();
+        for (NewsGroupArticle article : service.getAllArticlesFromNewsgroup(this)) {
+            if (!articles.containsKey(article.getArticleID())) {
+                articles.put(article.getArticleID(), article);
+            }
+            article.setRead(RuntimeStorage.instance().isRead(article.getArticleID()));
+        }
+        service.Disconnect();
+    }
+
+    public Collection<NewsGroupArticle> getArticles() {
+        return articles.values();
+    }
+
+    public NewsGroupServer getServer() {
+        return server;
+    }
+
+    public NewsGroupArticle getArticle(String article) {
+        NewsGroupArticle newsGroupArticle = articles.get(article);
+        if (newsGroupArticle == null) {
+            for (HashMap.Entry<String, NewsGroupArticle> ng : articles.entrySet()) {
+                newsGroupArticle = ng.getValue().getSubArticle(article);
+                if(newsGroupArticle != null)
+                    break;
+            }
+        }
+        return newsGroupArticle;
     }
 }
