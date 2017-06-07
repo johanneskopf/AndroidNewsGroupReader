@@ -3,12 +3,8 @@ package com.freeteam01.androidnewsgroupreader.Models;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by christian on 31.05.17.
- */
-
 public class Author {
-    private String forname;
+    private String forename;
     private String surname;
     private String name_string;
     private String e_mail;
@@ -22,8 +18,8 @@ public class Author {
         splitAndSetAuthorInfo();
     }
 
-    public String getForname(){
-        return forname;
+    public String getForename(){
+        return forename;
     }
 
     public String getSurname(){
@@ -52,7 +48,7 @@ public class Author {
         if(m.find()) {
             name_string = m.group(0).trim();
             if(name_string.contains(" ")) {
-                forname = name_string.substring(0, name_string.indexOf(" ")-1);
+                forename = name_string.substring(0, name_string.indexOf(" ")-1);
                 surname = name_string.substring(name_string.indexOf(" ")+1, name_string.length()-1);
             }
             else

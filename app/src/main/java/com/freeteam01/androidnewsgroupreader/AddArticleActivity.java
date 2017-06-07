@@ -39,11 +39,10 @@ public class AddArticleActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_article);
 
-        if(RuntimeStorage.instance().getUserSetting() == null ||
-                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getEmail())||
+        if (RuntimeStorage.instance().getUserSetting() == null ||
+                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getEmail()) ||
                 Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getForename()) ||
-                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getSurname()))
-        {
+                Strings.isNullOrEmpty(RuntimeStorage.instance().getUserSetting().getSurname())) {
             Intent launch = new Intent(AddArticleActivity.this, SettingsActivity.class);
             startActivityForResult(launch, 0);
             finish();
@@ -56,7 +55,7 @@ public class AddArticleActivity extends AppCompatActivity {
         et_subject_ = (EditText) findViewById(R.id.et_subject);
         et_post_ = (EditText) findViewById(R.id.et_post);
 
-        if(mode.equals("answer")) {
+        if (mode.equals("answer")) {
             article = bundle.getString("article");
             article_subject = bundle.getString("article_subject");
             article_text = bundle.getString("article_text");
@@ -67,25 +66,25 @@ public class AddArticleActivity extends AppCompatActivity {
         btn_article_send_ = (ImageButton) findViewById(R.id.btn_article_send);
         btn_article_send_.setOnClickListener(new AdapterView.OnClickListener() {
             @Override
-            public void onClick(View v){
-                if(group != null && et_post_.getText().length() != 0 && et_subject_.getText().length() != 0) {
+            public void onClick(View v) {
+                if (group != null && et_post_.getText().length() != 0 && et_subject_.getText().length() != 0) {
 
-                    Animation ranim = AnimationUtils.loadAnimation(btn_article_send_.getContext(), R.anim.rotate);
-                    btn_article_send_.startAnimation(ranim);
+                    Animation animation = AnimationUtils.loadAnimation(btn_article_send_.getContext(), R.anim.rotate);
+                    btn_article_send_.startAnimation(animation);
                     Log.d("AAA", "send post");
                     Log.d("AAA", server_name);
 
                     post_text = et_post_.getText().toString();
                     post_subject = et_subject_.getText().toString();
 
-                    if(mode.equals("post"))
+                    if (mode.equals("post"))
                         postArticle();
-                    else if(mode.equals("answer"))
+                    else if (mode.equals("answer"))
                         answerArticle();
                     else
                         throw new IllegalStateException();
 
-                    ranim.setAnimationListener(new Animation.AnimationListener() {
+                    animation.setAnimationListener(new Animation.AnimationListener() {
 
                         @Override
                         public void onAnimationStart(Animation animation) {
@@ -129,8 +128,8 @@ public class AddArticleActivity extends AppCompatActivity {
                 for (NewsGroupServer server : params) {
                     try {
                         service.Connect();
-                        if(service.post(RuntimeStorage.instance().getUserSetting().getForename() + " " + RuntimeStorage.instance().getUserSetting().getSurname()
-                                , RuntimeStorage.instance().getUserSetting().getEmail(), post_text, post_subject, group)){
+                        if (service.post(RuntimeStorage.instance().getUserSetting().getForename() + " " + RuntimeStorage.instance().getUserSetting().getSurname()
+                                , RuntimeStorage.instance().getUserSetting().getEmail(), post_text, post_subject, group)) {
                             Log.d("AAA", "posted");
                         }
                         service.Disconnect();
@@ -163,9 +162,10 @@ public class AddArticleActivity extends AppCompatActivity {
                 for (NewsGroupServer server : params) {
                     try {
                         service.Connect();
-                        if(service.answer(RuntimeStorage.instance().getUserSetting().getForename() + " " + RuntimeStorage.instance().getUserSetting().getSurname()
-                                , RuntimeStorage.instance().getUserSetting().getEmail(), post_text, post_subject, group, article, references)){
-                        }
+                        service.answer(RuntimeStorage.instance().getUserSetting().getForename() + " "
+                                        + RuntimeStorage.instance().getUserSetting().getSurname(),
+                                RuntimeStorage.instance().getUserSetting().getEmail(),
+                                post_text, post_subject, group, article, references);
                         service.Disconnect();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -186,14 +186,13 @@ public class AddArticleActivity extends AppCompatActivity {
         task.execute(server);
     }
 
-    private void setAnswerText(String article_text){
+    private void setAnswerText(String article_text) {
         String[] lines = article_text.split("\n");
         String mod_text = "";
-        for(String line: lines){
-            if(!line.equals("")){
+        for (String line : lines) {
+            if (!line.equals("")) {
                 mod_text += "> " + line + "\n";
-            }
-            else{
+            } else {
                 mod_text += line + "\n";
             }
         }

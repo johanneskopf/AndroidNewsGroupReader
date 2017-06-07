@@ -3,7 +3,6 @@ package com.freeteam01.androidnewsgroupreader.Models;
 import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.BuildConfig;
-import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
 
@@ -101,7 +100,7 @@ public class NewsGroupArticle {
                     Log.d("Encoding", "Firstvalue: " + first_value + ", Secondvalue: " + second_value);
                     try {
                         Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
-                        int converted_int = (int) converted;
+                        int converted_int = converted;
                         subject_bytes.write((byte) converted_int);
                     } catch (NumberFormatException e) {
                         Log.d("Encoding", "Wasn't able to convert '" + first_value + second_value + "' to Integer (HEX)");
@@ -133,7 +132,7 @@ public class NewsGroupArticle {
                     String first_value = String.valueOf(subject_cut.charAt(i + 1));
                     String second_value = String.valueOf(subject_cut.charAt(i + 2));
                     Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
-                    int converted_int = (int) converted;
+                    int converted_int = converted;
                     subject_bytes.write((byte) converted_int);
                     i += 2;
                 } else {
@@ -204,11 +203,11 @@ public class NewsGroupArticle {
         return group;
     }
 
-    public NewsGroupArticle getSubArticel(String article) {
+    public NewsGroupArticle getSubArticle(String article) {
         NewsGroupArticle ng_article = children.get(article);
         if (ng_article == null) {
             for (NewsGroupArticle ng : children.values()) {
-                ng_article = ng.getSubArticel(article);
+                ng_article = ng.getSubArticle(article);
                 if (ng_article != null) {
                     break;
                 }

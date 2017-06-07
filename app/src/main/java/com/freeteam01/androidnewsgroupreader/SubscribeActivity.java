@@ -168,8 +168,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
                     @Override
                     public void run() {
                         progressBar.setVisibility(View.GONE);
-//                        List newsgroups = new ArrayList(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
-//                        Collections.sort(newsgroups);
                         adapter.addAll(RuntimeStorage.instance().getNewsgroupServer(server).getAllNewsgroups());
                         adapter.sort(new NewsGroupEntryComparator());
                     }
@@ -178,31 +176,6 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
             }
         }.execute();
         adapter.notifyDataSetChanged();
-    }
-
-    private void createAndShowDialog(Exception exception, String title) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
-        }
-        createAndShowDialog(ex.getMessage(), title);
-    }
-
-    private void createAndShowDialog(final String message, final String title) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setMessage(message);
-        builder.setTitle(title);
-        builder.create().show();
-    }
-
-    private void createAndShowDialogFromTask(final Exception exception, String title) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createAndShowDialog(exception, "Error");
-            }
-        });
     }
 
     @Override

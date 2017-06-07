@@ -1,14 +1,11 @@
 package com.freeteam01.androidnewsgroupreader.Services;
 
-import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
-import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.UserSetting;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,10 +40,6 @@ public class RuntimeStorage {
         if (!servers_.containsKey(name)) {
             servers_.put(name, new NewsGroupServer(name));
         }
-    }
-
-    void loadNewsgroups(String server) throws IOException {
-        servers_.get(server).loadNewsGroups();
     }
 
     public Set<String> getAllNewsgroupServers() {
