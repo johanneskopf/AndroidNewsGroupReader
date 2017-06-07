@@ -33,23 +33,8 @@ public class SettingsActivity extends AppCompatActivity {
         surnameView = (AutoCompleteTextView) findViewById(R.id.surname);
 
         if (!AzureService.isInitialized()) {
-            Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
             final Context context = this;
             AzureService.Initialize(context, AzureService.createClient(context));
-
-            /*try {
-                AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-                    @Override
-                    protected Void doInBackground(Void... params) {
-                        AzureService.Initialize(context, AzureService.createClient(context));
-                        return null;
-                    }
-                }.get(); //.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }*/
         }
         UserSetting userSetting = AzureService.getInstance().getUserSetting();
         if(userSetting != null)

@@ -1,5 +1,6 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,7 +19,7 @@ public class PostDate {
     private int seconds;
     private GregorianCalendar date;
 
-    public PostDate(String date_input){
+    public PostDate(String date_input) {
         date_input_string = date_input;
         splitAndSetDateAndTimezone();
         splitAndSetDateAttributes();
@@ -26,7 +27,9 @@ public class PostDate {
     }
 
     public String getDateString(){
-        return date_string;
+        SimpleDateFormat format = new SimpleDateFormat("dd-MMMM-yyyy");
+        format.setCalendar(date);
+        return format.format(date.getTime());
     }
 
     public GregorianCalendar getDate(){

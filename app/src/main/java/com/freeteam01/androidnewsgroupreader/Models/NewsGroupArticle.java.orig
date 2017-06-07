@@ -75,7 +75,15 @@ public class NewsGroupArticle {
         AzureService.getInstance().readArticleChanged(this);
     }
 
-   public void setDepth(int depth) {
+<<<<<<< HEAD
+    public void setDepth(int depth){
+=======
+    public int getDepth() {
+        return depth_;
+    }
+
+    public void setDepth(int depth) {
+>>>>>>> b241d877ac93dacc0c23238c4f6463b39b76c5ed
         this.depth_ = depth;
     }
 

@@ -96,11 +96,4 @@ public class NewsGroupeArticleTests {
         NewsGroupArticle article = new NewsGroupArticle(entry, "ID", "subject", "Thu, 2 Feb 2017 21:29:40 +0100", "Max");
         article.getGroup();
     }
-
-    @Test
-    public void test_getSubArticle() throws Exception {
-        NewsGroupEntry entry = mock(NewsGroupEntry.class);
-        NewsGroupArticle article = new NewsGroupArticle(entry, "ID", "subject", "Thu, 2 Feb 2017 21:29:40 +0100", "Max");
-        article.getSubArticel("1");
-    }
 }

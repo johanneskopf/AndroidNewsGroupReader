@@ -10,16 +10,16 @@ import java.util.Objects;
 
 public class NewsGroupEntry {
 
-    HashMap<String, NewsGroupArticle> articles_ = new HashMap<>();
+    HashMap<String, NewsGroupArticle> articles = new HashMap<>();
     private String id;
     private int articleCount = 0;
     private String name = null;
-    private boolean subscribed_ = false;
-    private NewsGroupServer server_ = null;
+    private boolean subscribed = false;
+    private NewsGroupServer server = null;
 
     public NewsGroupEntry(NewsGroupServer server, int articleCount, String name) {
         super();
-        this.server_ = server;
+        this.server = server;
         this.articleCount = articleCount;
         this.name = name;
     }
@@ -37,7 +37,7 @@ public class NewsGroupEntry {
     }
 
     public boolean isSubscribed() {
-        return subscribed_;
+        return subscribed;
     }
 
     @Override
@@ -46,47 +46,40 @@ public class NewsGroupEntry {
     }
 
     public String toString() {
-        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.subscribed_+ "'" + "', id: '" + this.id + "'";
+        return "Name: '" + this.name + "', articleCount: '" + this.articleCount + "', selected: '" + this.subscribed + "'" + "', id: '" + this.id + "'";
     }
 
     public void setSubscribed(boolean subscribed) {
-        this.subscribed_ = subscribed;
+        this.subscribed = subscribed;
     }
 
     public void loadArticles() throws IOException {
-        NewsGroupService service = new NewsGroupService(server_);
+        NewsGroupService service = new NewsGroupService(server);
         service.Connect();
         for (NewsGroupArticle article : service.getAllArticlesFromNewsgroup(this)) {
-            if (!articles_.containsKey(article.getArticleID())) {
-                articles_.put(article.getArticleID(), article);
-            } else {
-                //TODO Update logic
+            if (!articles.containsKey(article.getArticleID())) {
+                articles.put(article.getArticleID(), article);
             }
-
             article.setRead(RuntimeStorage.instance().isRead(article.getArticleID()));
         }
         service.Disconnect();
     }
 
     public Collection<NewsGroupArticle> getArticles() {
-        return articles_.values();
+        return articles.values();
     }
 
     public NewsGroupServer getServer() {
-        return server_;
+        return server;
     }
 
     public NewsGroupArticle getArticle(String article) {
-        NewsGroupArticle newsGroupArticle = articles_.get(article);
+        NewsGroupArticle newsGroupArticle = articles.get(article);
         if (newsGroupArticle == null) {
-            for (HashMap.Entry<String, NewsGroupArticle> ng : articles_.entrySet()) {
-                newsGroupArticle = ng.getValue().getSubArticel(article);
+            for (HashMap.Entry<String, NewsGroupArticle> ng : articles.entrySet()) {
+                newsGroupArticle = ng.getValue().getSubArticle(article);
                 if(newsGroupArticle != null)
                     break;
-//                if (ng.getValue().getSubArticel(articel).getChildren().containsKey(article)) {
-//                    newsGroupArticle = ng.getValue().getChildren().get(article);
-//                    break;
-//                }
             }
         }
         return newsGroupArticle;

@@ -92,23 +92,23 @@ public class NewsGroupService {
         return new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
     }
 
-    public boolean post(String user_name, String user_mail, String article_text,
+    public boolean post(String userName, String userMail, String articleText,
                         String subject, String group) {
         try {
             if (!client.isAllowedToPost())
                 return false;
 
             Writer writer = client.postArticle();
-            if (writer == null) { // failure
+            if (writer == null) {
                 Log.d("NGS", "writer is null");
                 return false;
             }
 
-            writer.write(constructNNTPMessage(user_name, user_mail, article_text, subject,
+            writer.write(constructNNTPMessage(userName, userMail, articleText, subject,
                     group, null, null));
 
             writer.close();
-            if (!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) {
                 Log.d("NGS", "pending is false");
                 return false;
             }
@@ -118,23 +118,23 @@ public class NewsGroupService {
         return true;
     }
 
-    public boolean answer(String user_name, String user_mail, String article_text, String subject,
-                          String group, String article_id, List<String> references) {
+    public boolean answer(String userName, String userMail, String articleText, String subject,
+                          String group, String articleId, List<String> references) {
         try {
             if (!client.isAllowedToPost())
                 return false;
 
             Writer writer = client.postArticle();
-            if (writer == null) { // failure
+            if (writer == null) {
                 Log.d("NGS", "writer is null");
                 return false;
             }
 
-            writer.write(constructNNTPMessage(user_name, user_mail, article_text, subject, group,
-                    article_id, references));
+            writer.write(constructNNTPMessage(userName, userMail, articleText, subject, group,
+                    articleId, references));
 
             writer.close();
-            if (!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) {
                 Log.d("NGS", "pending is false");
                 return false;
             }
@@ -145,28 +145,22 @@ public class NewsGroupService {
         return true;
     }
 
-    public String constructNNTPMessage(String user_name, String user_mail, String article_text,
-                                       String subject, String group, String article_id,
+    public String constructNNTPMessage(String userName, String userMail, String articleText,
+                                       String subject, String group, String articleId,
                                        List<String> references) {
-        //TODO: insert user credentials here
-        SimpleNNTPHeader nntp_header = new SimpleNNTPHeader(user_name + " <" + user_mail + ">", subject);
-        //nntp_header.addNewsgroup(group);
-        nntp_header.addNewsgroup(group);
-
-        //System.out.println(references);
+        SimpleNNTPHeader httpHeader = new SimpleNNTPHeader(userName + " <" + userMail + ">", subject);
+        httpHeader.addNewsgroup(group);
         if (references != null) {
-            String nntp_reference = "";
-
+            String httpReference = "";
             if (references.size() != 0) {
                 for (String reference : references) {
-                    nntp_reference += reference + " ";
+                    httpReference += reference + " ";
                 }
             }
-
-            nntp_reference += article_id;
-            nntp_header.addHeaderField("References", nntp_reference);
+            httpReference += articleId;
+            httpHeader.addHeaderField("References", httpReference);
         }
-        return nntp_header.toString() + new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
+        return httpHeader.toString() + new String(articleText.getBytes(StandardCharsets.ISO_8859_1));
     }
 
 }

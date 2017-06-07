@@ -1,8 +1,6 @@
 package com.freeteam01.androidnewsgroupreader;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -10,8 +8,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.ScrollingMovementMethod;
@@ -39,24 +35,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static android.R.attr.level;
-
 
 public class PostActivity extends AppCompatActivity implements ISpinnableActivity {
 
-    PostViewAdapter tree_view_adapter_;
-    TextView article_text_text_view_;
-    TextView from_text_text_view_;
-    TextView date_text_text_view_;
-    TextView article_name_text_text_view_;
-    ListView tree_list_view_;
-    List<NewsGroupArticle> articles_ = new ArrayList<>();
-    List<NewsGroupArticle> flat_ = new ArrayList<>();
-    String article_text_;
-    private NewsGroupArticle article_;
-    private AtomicInteger background_jobs_count = new AtomicInteger();
-    private ProgressBar progressBar_;
-    private FloatingActionButton articleBtn_;
+    PostViewAdapter treeViewAdapter;
+    TextView articleTextTextView;
+    TextView fromTextTextView;
+    TextView dateTextTextView;
+    TextView articleNameTextTextView;
+    ListView treeListView;
+    List<NewsGroupArticle> articles = new ArrayList<>();
+    List<NewsGroupArticle> flat = new ArrayList<>();
+    String articleText;
+    private NewsGroupArticle article;
+    private AtomicInteger backgroundJobsCount = new AtomicInteger();
+    private ProgressBar progressBar;
+    private FloatingActionButton articleButton;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,40 +61,40 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         final String group = bundle.getString("group");
         final String article = bundle.getString("article");
 
-        article_ = RuntimeStorage.instance().getNewsgroupServer(server).getNewsgroup(group).getArticle(article);
+        this.article = RuntimeStorage.instance().getNewsgroupServer(server).getNewsgroup(group).getArticle(article);
 
-        articles_ = new ArrayList<>(article_.getChildren().values());
+        articles = new ArrayList<>(this.article.getChildren().values());
 
-        tree_list_view_ = (ListView) findViewById(R.id.tree_view);
-        tree_view_adapter_ = new PostViewAdapter(this, tree_list_view_, this, new ArrayList<NewsGroupArticle>());
-        tree_list_view_.setAdapter(tree_view_adapter_);
+        treeListView = (ListView) findViewById(R.id.tree_view);
+        treeViewAdapter = new PostViewAdapter(this, treeListView, this, new ArrayList<NewsGroupArticle>());
+        treeListView.setAdapter(treeViewAdapter);
 
-        article_text_text_view_ = (TextView) findViewById(R.id.tv_article);
-        progressBar_ = (ProgressBar) findViewById(R.id.progressBar);
-        article_text_text_view_.setMovementMethod(new ScrollingMovementMethod());
+        articleTextTextView = (TextView) findViewById(R.id.tv_article);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        articleTextTextView.setMovementMethod(new ScrollingMovementMethod());
 
-        from_text_text_view_ = (TextView) findViewById(R.id.tv_from);
-        date_text_text_view_ = (TextView) findViewById(R.id.tv_date);
-        article_name_text_text_view_ = (TextView) findViewById(R.id.tv_article_name);
+        fromTextTextView = (TextView) findViewById(R.id.tv_from);
+        dateTextTextView = (TextView) findViewById(R.id.tv_date);
+        articleNameTextTextView = (TextView) findViewById(R.id.tv_article_name);
 
         LoadNewsGroupsArticleText loader = new LoadNewsGroupsArticleText(this);
         loader.execute();
 
-        tree_view_adapter_.clear();
-        flat_.add(article_);
-        tree_view_adapter_.add(article_);
-        List<NewsGroupArticle> set_list = new ArrayList<>(article_.getChildren().values());
+        treeViewAdapter.clear();
+        flat.add(this.article);
+        treeViewAdapter.add(this.article);
+        List<NewsGroupArticle> set_list = new ArrayList<>(this.article.getChildren().values());
         setTreeElements(set_list, 1);
-        tree_view_adapter_.notifyDataSetChanged();
+        treeViewAdapter.notifyDataSetChanged();
 
-        articleBtn_ = (FloatingActionButton) findViewById(R.id.btn_answer_article);
+        articleButton = (FloatingActionButton) findViewById(R.id.btn_answer_article);
 
-        articleBtn_.setOnClickListener(new AdapterView.OnClickListener() {
+        articleButton.setOnClickListener(new AdapterView.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (article_ != null) {
-                    Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
-                    articleBtn_.startAnimation(ranim);
+                if (PostActivity.this.article != null) {
+                    Animation ranim = AnimationUtils.loadAnimation(articleButton.getContext(), R.anim.scale);
+                    articleButton.startAnimation(ranim);
 
                     ranim.setAnimationListener(new Animation.AnimationListener() {
 
@@ -119,9 +113,9 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
                             b.putString("mode", "answer");
                             b.putString("server", server);
                             b.putString("group", group);
-                            b.putString("article", article_.getArticleID());
-                            b.putString("article_text", article_text_);
-                            b.putString("article_subject", article_.getSubjectString());
+                            b.putString("article", PostActivity.this.article.getArticleID());
+                            b.putString("article_text", articleText);
+                            b.putString("article_subject", PostActivity.this.article.getSubjectString());
                             launch.putExtras(b);
                             startActivityForResult(launch, 0);
                         }
@@ -130,16 +124,13 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
                 }
             }
         });
-
-//        et_answer_.setCustomSelectionActionModeCallback(new StyleCallback());
     }
 
     public void setTreeElements(List<NewsGroupArticle> articles, int depth) {
         for (NewsGroupArticle article : articles) {
             article.setDepth(depth);
-            flat_.add(article);
-            tree_view_adapter_.add(article);
-//            tree_view_adapter_.add(addNTimes(" ", depth) + article.getSubjectString());
+            flat.add(article);
+            treeViewAdapter.add(article);
             if (article.getChildren().values().size() > 0) {
                 List<NewsGroupArticle> set_list = new ArrayList<>(article.getChildren().values());
                 setTreeElements(set_list, depth + 1);
@@ -147,22 +138,15 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         }
     }
 
-    public String addNTimes(String s, int n) {
-        String ret = new String();
-        for (int i = 0; i < n; i++)
-            ret += s;
-        return ret;
-    }
-
     @Override
     public void addedBackgroundJob() {
-        background_jobs_count.getAndIncrement();
+        backgroundJobsCount.getAndIncrement();
         setSpinnerVisibility();
     }
 
     @Override
     public void finishedBackgroundJob() {
-        background_jobs_count.getAndDecrement();
+        backgroundJobsCount.getAndDecrement();
         setSpinnerVisibility();
     }
 
@@ -170,10 +154,10 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (background_jobs_count.get() == 0) {
-                    progressBar_.setVisibility(View.GONE);
+                if (backgroundJobsCount.get() == 0) {
+                    progressBar.setVisibility(View.GONE);
                 } else {
-                    progressBar_.setVisibility(View.VISIBLE);
+                    progressBar.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -190,7 +174,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             super.doInBackground(params);
             String article_text = null;
             try {
-                article_text = article_.getText();
+                article_text = article.getText();
             } catch (Exception e) {
                 Log.e("LOAD_TEXT", Log.getStackTraceString(e));
             }
@@ -199,12 +183,11 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
 
         protected void onPostExecute(String article_text) {
             super.onPostExecute(article_text);
-//            article_text_text_view_.setText(article_text);
-            article_text_ = article_text;
+            articleText = article_text;
             setFormatedArticleText(article_text);
-            from_text_text_view_.setText(article_.getAuthor().getNameString());
-            date_text_text_view_.setText(article_.getDate().getDateString());
-            article_name_text_text_view_.setText(article_.getSubjectString());
+            fromTextTextView.setText(article.getAuthor().getNameString());
+            dateTextTextView.setText(article.getDate().getDateString());
+            articleNameTextTextView.setText(article.getSubjectString());
         }
 
 
@@ -218,22 +201,20 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             formatQuote(finalstring);
             formatEmoji(finalstring);
 
-
-            article_text_text_view_.setText(finalstring);
+            articleTextTextView.setText(finalstring);
         }
-        //http://apps.timwhitlock.info/emoji/tables/unicode
+
+        // see http://apps.timwhitlock.info/emoji/tables/unicode
         private void formatEmoji(SpannableStringBuilder finalstring) {
             emojiFromTo(finalstring, ":) :-)", 0x1F603);
             emojiFromTo(finalstring, ";) ;-)", 0x1F609);
             emojiFromTo(finalstring, ":P :-P", 0x1F61C);
         }
 
-        private void emojiFromTo(SpannableStringBuilder finalstring, String emoji, int unicode)
-        {
-            for(String e : emoji.split(" "))
-            {
+        private void emojiFromTo(SpannableStringBuilder finalstring, String emoji, int unicode) {
+            for (String e : emoji.split(" ")) {
                 String emojiEscaped = Pattern.quote(e);
-                Pattern boldRegex = Pattern.compile("(" +emojiEscaped+")");
+                Pattern boldRegex = Pattern.compile("(" + emojiEscaped + ")");
                 Matcher matcher = boldRegex.matcher(finalstring);
                 while (matcher.find()) {
                     finalstring.replace(matcher.start(1), matcher.end(1), getEmojiByUnicode(unicode));
@@ -242,7 +223,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             }
         }
 
-        private String getEmojiByUnicode(int unicode){
+        private String getEmojiByUnicode(int unicode) {
             return new String(Character.toChars(unicode));
         }
 
@@ -252,8 +233,8 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             while (matcher.find()) {
                 String quoteString = finalstring.subSequence(matcher.start(1), matcher.end(1)).toString();
                 int counter = 0;
-                for( int i=0; i<quoteString.length(); i++ ) {
-                    if( quoteString.charAt(i) == '>' ) {
+                for (int i = 0; i < quoteString.length(); i++) {
+                    if (quoteString.charAt(i) == '>') {
                         counter++;
                     }
                 }
@@ -346,7 +327,5 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
                 canvas.drawText(text, start, end, x + distance * levels, y, paint);
             }
         }
-
     }
-
 }

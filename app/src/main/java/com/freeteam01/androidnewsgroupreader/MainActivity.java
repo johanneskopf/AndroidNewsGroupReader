@@ -53,8 +53,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity, SearchView.OnQueryTextListener {
 
-    private static final int REQUEST_INTERNET = 0;
-
     Spinner subscribed_newsgroups_spinner_;
     Spinner newsgroupsserver_spinner_;
     NewsGroupSubscribedSpinnerAdapter subscribed_spinner_adapter_;
@@ -75,14 +73,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
     private NewsGroupSortType sortType = NewsGroupSortType.DATE;
     private Menu menu;
 
-    private void createAndShowDialog(Exception exception, String title) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
-        }
-        createAndShowDialog(ex.getMessage(), title);
-    }
-
     private void createAndShowDialog(final String message, final String title) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -93,18 +83,13 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // When request completes
         if (resultCode == RESULT_OK) {
-            // Check the request code matches the one we send in the login request
             if (requestCode == AzureService.LOGIN_REQUEST_CODE_GOOGLE) {
                 MobileServiceActivityResult result = AzureService.getInstance().getClient().onActivityResult(data);
                 if (result.isLoggedIn()) {
-                    // login succeeded
                     Log.d("AzureService", "LoginActivity - login succeeded");
-                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
 
                     AzureService.getInstance().OnAuthenticated();
-
 
                     if (menu != null) {
                         showOption(R.id.action_settings);
@@ -112,10 +97,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                         showOption(R.id.action_logout);
                         hideOption(R.id.action_login);
                     }
-
-//                    finish();
                 } else {
-                    // login failed, check the error message
                     Log.d("AzureService", "LoginActivity - login failed");
                     String errorMessage = result.getErrorMessage();
                     createAndShowDialog(errorMessage, "Error");
@@ -151,8 +133,8 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         sort_by_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sort_by_spinner_.setAdapter(sort_by_spinner_adapter_);
 
-        final Context context = this;
         if (!AzureService.isInitialized()) {
+            final Context context = this;
             AzureService.Initialize(context, AzureService.createClient(context));
         }
 
@@ -230,10 +212,10 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void onClick(View v) {
                 if (selected_newsgroup_ != null) {
-                    Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
-                    articleBtn_.startAnimation(ranim);
+                    Animation animation = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
+                    articleBtn_.startAnimation(animation);
 
-                    ranim.setAnimationListener(new Animation.AnimationListener() {
+                    animation.setAnimationListener(new Animation.AnimationListener() {
 
                         @Override
                         public void onAnimationStart(Animation animation) {
@@ -267,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             }
         });
 
-        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+        new AsyncTask<Void, Void, String>() {
             @Override
             protected String doInBackground(Void... params) {
                 AzureService.getInstance().authenticate();
@@ -321,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                     tvError_.setVisibility(View.GONE);
                     tvError_.setText("");
                 } else if ((socket_error_msg_.length() > 0) || !isOnline()) {
-                    socket_error_msg_ = isOnline() == false ? "No Internet connection" : socket_error_msg_;
+                    socket_error_msg_ = !isOnline() ? "No Internet connection" : socket_error_msg_;
                     Log.d("MA", socket_error_msg_);
                     tvError_.setText(socket_error_msg_);
                     tvError_.setVisibility(View.VISIBLE);
@@ -497,14 +479,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
                 if (subscribedNewsGroupEntries != null) {
                     if (!subscribedNewsGroupEntries.isEmpty() && (copy != null && !subscribedNewsGroupEntries.contains(copy))) {
-//                        subscribed_newsgroups_spinner_.setSelection(Adapter.NO_SELECTION);
-//                        subscribed_newsgroups_spinner_.setSelection(0);
-//                        selected_newsgroup_ = subscribed_newsgroups_spinner_.getSelectedItem().toString();
                         showNewsGroupArticles();
                         Log.d("Article", "MainActivity - set selected newsgroup to " + selected_newsgroup_);
                     } else if (copy == null || !subscribedNewsGroupEntries.contains(copy)) {
-//                        subscribed_newsgroups_spinner_.setSelection(Adapter.NO_SELECTION);
-//                        selected_newsgroup_ = null;
                         showNewsGroupArticles();
                         Log.d("Article", "MainActivity - set selected newsgroup to none");
                     }
