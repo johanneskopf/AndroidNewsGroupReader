@@ -53,8 +53,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends AppCompatActivity implements AzureServiceEvent, ISpinnableActivity, SearchView.OnQueryTextListener {
 
-    private static final int REQUEST_INTERNET = 0;
-
     Spinner subscribed_newsgroups_spinner_;
     Spinner newsgroupsserver_spinner_;
     NewsGroupSubscribedSpinnerAdapter subscribed_spinner_adapter_;
@@ -74,14 +72,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
     private NewsGroupSortType sortType = NewsGroupSortType.DATE;
     private Menu menu;
-
-    private void createAndShowDialog(Exception exception, String title) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
-        }
-        createAndShowDialog(ex.getMessage(), title);
-    }
 
     private void createAndShowDialog(final String message, final String title) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -230,10 +220,10 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
             @Override
             public void onClick(View v) {
                 if (selected_newsgroup_ != null) {
-                    Animation ranim = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
-                    articleBtn_.startAnimation(ranim);
+                    Animation animation = AnimationUtils.loadAnimation(articleBtn_.getContext(), R.anim.scale);
+                    articleBtn_.startAnimation(animation);
 
-                    ranim.setAnimationListener(new Animation.AnimationListener() {
+                    animation.setAnimationListener(new Animation.AnimationListener() {
 
                         @Override
                         public void onAnimationStart(Animation animation) {
@@ -321,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                     tvError_.setVisibility(View.GONE);
                     tvError_.setText("");
                 } else if ((socket_error_msg_.length() > 0) || !isOnline()) {
-                    socket_error_msg_ = isOnline() == false ? "No Internet connection" : socket_error_msg_;
+                    socket_error_msg_ = !isOnline() ? "No Internet connection" : socket_error_msg_;
                     Log.d("MA", socket_error_msg_);
                     tvError_.setText(socket_error_msg_);
                     tvError_.setVisibility(View.VISIBLE);

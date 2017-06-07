@@ -43,5 +43,10 @@
     <string name="subscribe_heading">News Server:</string>
     <string name="article_text">Article Text:</string>
     <string name="subject">Subject:</string>
+
+    <string name="search_hint">Search</string>
+
+    <string name="post_from">Forename Surname</string>
+    <string name="post_const_from">From:</string>
 </resources>
 

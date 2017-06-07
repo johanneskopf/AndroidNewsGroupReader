@@ -30,10 +30,10 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements F
     private AppCompatActivity mainActivity;
     private ListView listView;
     private PostViewAdapter adapter;
-    private FriendFilter friend_filter;
+    private FriendFilter friendFilter;
     private ArrayList<NewsGroupArticle> items;
     private ArrayList<NewsGroupArticle> filtered;
-    private Comparator<? super NewsGroupArticle> current_comperator_;
+    private Comparator<? super NewsGroupArticle> currentComperator;
 
     public PostViewAdapter(AppCompatActivity mainActivity, ListView article_list_view, Context context, ArrayList<NewsGroupArticle> articles) {
         super(context, 0, articles);
@@ -113,24 +113,20 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements F
 
     @Override
     public void sort(@NonNull Comparator<? super NewsGroupArticle> comparator) {
-        current_comperator_ = comparator;
+        currentComperator = comparator;
         Collections.sort(filtered, comparator);
         notifyDataSetChanged();
     }
 
     @Override
     public Filter getFilter() {
-        if (friend_filter == null) {
-            friend_filter = new FriendFilter();
+        if (friendFilter == null) {
+            friendFilter = new FriendFilter();
         }
 
-        return friend_filter;
+        return friendFilter;
     }
 
-    /**
-     * Custom filter for friend list
-     * Filter content in friend list according to the search text
-     */
     private class FriendFilter extends Filter {
 
         @Override
@@ -158,18 +154,11 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements F
             return filterResults;
         }
 
-
-        /**
-         * Notify about filtered list to ui
-         *
-         * @param constraint text
-         * @param results    filtered result
-         */
         @SuppressWarnings("unchecked")
         @Override
         protected void publishResults(CharSequence constraint, FilterResults results) {
             filtered = (ArrayList<NewsGroupArticle>) results.values;
-            Collections.sort(filtered, current_comperator_);
+            Collections.sort(filtered, currentComperator);
 
             if (results.count > 0) {
                 notifyDataSetChanged();
@@ -178,5 +167,4 @@ public class PostViewAdapter extends ArrayAdapter<NewsGroupArticle> implements F
             }
         }
     }
-
 }

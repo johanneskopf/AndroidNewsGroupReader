@@ -1,5 +1,7 @@
 package com.freeteam01.androidnewsgroupreader.Models;
 
+import android.util.Log;
+
 import com.freeteam01.androidnewsgroupreader.BuildConfig;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
 import com.freeteam01.androidnewsgroupreader.Services.NewsGroupService;
@@ -60,7 +62,7 @@ public class NewsGroupArticle {
         return references;
     }
 
-    public Author getAuthor(){
+    public Author getAuthor() {
         return author;
     }
 
@@ -77,15 +79,15 @@ public class NewsGroupArticle {
         AzureService.getInstance().readArticleChanged(this);
     }
 
-    public int getDepth(){
+    public int getDepth() {
         return depth_;
     }
 
-    public void setDepth(int depth){
+    public void setDepth(int depth) {
         this.depth_ = depth;
     }
 
-    private String convertToEncoding(String encoded_subject){
+    private String convertToEncoding(String encoded_subject) {
         if (encoded_subject.contains("=?UTF-8?Q?")) {
             String subject_cut = encoded_subject.replace("=?UTF-8?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
@@ -95,9 +97,14 @@ public class NewsGroupArticle {
                 if (c == '=') {
                     String first_value = String.valueOf(subject_cut.charAt(i + 1));
                     String second_value = String.valueOf(subject_cut.charAt(i + 2));
-                    Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
-                    int converted_int = (int) converted;
-                    subject_bytes.write((byte) converted_int);
+                    Log.d("Encoding", "Firstvalue: " + first_value + ", Secondvalue: " + second_value);
+                    try {
+                        Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
+                        int converted_int = converted;
+                        subject_bytes.write((byte) converted_int);
+                    } catch (NumberFormatException e) {
+                        Log.d("Encoding", "Wasn't able to convert '" + first_value + second_value + "' to Integer (HEX)");
+                    }
                     i += 2;
                 } else {
                     subject_bytes.write((byte) c);
@@ -108,14 +115,12 @@ public class NewsGroupArticle {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-        }
-        else if(encoded_subject.contains("=?UTF-8?B?")){
+        } else if (encoded_subject.contains("=?UTF-8?B?")) {
             int start_index = encoded_subject.indexOf("=?UTF-8?B?") + "=?UTF-8?B?".length() - 1;
-            String subject_cut = encoded_subject.substring(start_index, encoded_subject.length()-1);
-            byte[] valueDecoded= Base64.decodeBase64(subject_cut.getBytes());
+            String subject_cut = encoded_subject.substring(start_index, encoded_subject.length() - 1);
+            byte[] valueDecoded = Base64.decodeBase64(subject_cut.getBytes());
             return new String(valueDecoded);
-        }
-        else if(encoded_subject.contains("=?ISO-8859-15?Q?") || encoded_subject.contains("=?iso-8859-15?Q?")) {
+        } else if (encoded_subject.contains("=?ISO-8859-15?Q?") || encoded_subject.contains("=?iso-8859-15?Q?")) {
             String subject_cut = encoded_subject.contains("=?ISO-8859-15?Q?") ? encoded_subject.replace("=?ISO-8859-15?Q?", "") :
                     encoded_subject.replace("=?iso-8859-15?Q?", "");
             subject_cut = subject_cut.replace("?=", "");
@@ -127,7 +132,7 @@ public class NewsGroupArticle {
                     String first_value = String.valueOf(subject_cut.charAt(i + 1));
                     String second_value = String.valueOf(subject_cut.charAt(i + 2));
                     Integer converted = Integer.valueOf((first_value + second_value).toLowerCase(), 16);
-                    int converted_int = (int) converted;
+                    int converted_int = converted;
                     subject_bytes.write((byte) converted_int);
                     i += 2;
                 } else {
@@ -139,8 +144,7 @@ public class NewsGroupArticle {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-        }
-        else{
+        } else {
             return encoded_subject;
         }
         return null;
@@ -170,7 +174,7 @@ public class NewsGroupArticle {
             lastRef = ref;
         }
 
-        if(lastRef.equals(this.articleID))
+        if (lastRef.equals(this.articleID))
             children.put(ngArticle.articleID, ngArticle);
         else
             for (NewsGroupArticle childArticle : children.values()) {
@@ -180,7 +184,8 @@ public class NewsGroupArticle {
 
     public String getText() throws IOException {
         if (text == null) {
-            if (BuildConfig.DEBUG && group == null) throw new AssertionError("getText(): group should never be null");
+            if (BuildConfig.DEBUG && group == null)
+                throw new AssertionError("getText(): group should never be null");
             NewsGroupService service = new NewsGroupService(group.getServer());
             try {
                 service.Connect();
@@ -198,11 +203,11 @@ public class NewsGroupArticle {
         return group;
     }
 
-    public NewsGroupArticle getSubArticel(String article) {
+    public NewsGroupArticle getSubArticle(String article) {
         NewsGroupArticle ng_article = children.get(article);
         if (ng_article == null) {
             for (NewsGroupArticle ng : children.values()) {
-                ng_article = ng.getSubArticel(article);
+                ng_article = ng.getSubArticle(article);
                 if (ng_article != null) {
                     break;
                 }

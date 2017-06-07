@@ -59,14 +59,14 @@
                 android:layout_marginStart="11dp"
                 android:layout_toEndOf="@+id/tv_const_from"
                 android:paddingLeft="8dp"
-                android:text="Forname Surname" />
+                android:text="@string/post_from" />
 
             <TextView
                 android:id="@+id/tv_const_from"
                 android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:text="From:" />
+                android:text="@string/post_const_from" />
 
         </RelativeLayout>
 
