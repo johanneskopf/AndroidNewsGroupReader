@@ -70,14 +70,6 @@ public class AzureService {
         readArticles = new ArrayList<>();
         servers = new ArrayList<>();
         userSettings = new ArrayList<>();
-
-/*        try {
-            client = new MobileServiceClient(mobileBackendUrl, context);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }*/
-
-        authenticate();
     }
 
     public static void Initialize(Context context, MobileServiceClient client) {

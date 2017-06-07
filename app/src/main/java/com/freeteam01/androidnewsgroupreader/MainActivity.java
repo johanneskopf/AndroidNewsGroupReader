@@ -153,19 +153,7 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
 
         final Context context = this;
         if (!AzureService.isInitialized()) {
-            AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
-                @Override
-                protected String doInBackground(Void... params) {
-                    AzureService.Initialize(context, AzureService.createClient(context));
-                    return null;
-                }
-
-                @Override
-                protected void onPostExecute(String result) {
-                    super.onPostExecute(result);
-                    OnInitializedAzure();
-                }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            AzureService.Initialize(context, AzureService.createClient(context));
         }
 
         showNewsgroupServers();
@@ -278,10 +266,19 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 }
             }
         });
-    }
 
-    private void OnInitializedAzure() {
+        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... params) {
+                AzureService.getInstance().authenticate();
+                return null;
+            }
 
+            @Override
+            protected void onPostExecute(String result) {
+                super.onPostExecute(result);
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private void showNewsGroupArticles() {
