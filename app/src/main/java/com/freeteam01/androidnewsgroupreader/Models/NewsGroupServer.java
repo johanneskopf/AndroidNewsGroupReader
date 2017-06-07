@@ -20,26 +20,9 @@ public class NewsGroupServer {
         this.name_ = name;
     }
 
-    public void loadNewsGroups() throws IOException {
-        NewsGroupService service = new NewsGroupService(this);
-        service.Connect();
-        for (NewsGroupEntry ng : service.getAllNewsgroups()) {
-            if (!newsgroups_.containsKey(ng.getName())) {
-                newsgroups_.put(ng.getName(), ng);
-            }
-        }
-    }
-
     @Override
     public int hashCode() {
         return Objects.hashCode(this.name_);
-    }
-
-    public void setSubscribed(ArrayList<String> subscribed) {
-        for(String s : subscribed)
-        {
-            setSubscribed(s);
-        }
     }
 
     public void reload() throws IOException {

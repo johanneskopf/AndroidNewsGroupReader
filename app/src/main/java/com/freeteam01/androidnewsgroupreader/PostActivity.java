@@ -204,7 +204,7 @@ public class PostActivity extends AppCompatActivity implements ISpinnableActivit
             articleTextTextView.setText(finalstring);
         }
 
-        //http://apps.timwhitlock.info/emoji/tables/unicode
+        // see http://apps.timwhitlock.info/emoji/tables/unicode
         private void formatEmoji(SpannableStringBuilder finalstring) {
             emojiFromTo(finalstring, ":) :-)", 0x1F603);
             emojiFromTo(finalstring, ";) ;-)", 0x1F609);

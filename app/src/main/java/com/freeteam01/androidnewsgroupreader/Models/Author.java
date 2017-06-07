@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Author {
-    private String forename;
+    private String forname;
     private String surname;
     private String name_string;
     private String e_mail;
@@ -18,10 +18,6 @@ public class Author {
         splitAndSetAuthorInfo();
     }
 
-    public String getForename(){
-        return forename;
-    }
-
     public String getSurname(){
         return surname;
     }
@@ -30,17 +26,10 @@ public class Author {
         return name_string;
     }
 
-    public boolean onlyAlias(){
-        return only_alias;
-    }
-
     public String getEmail(){
         return e_mail;
     }
 
-    public String getFromString(){
-        return from_input_string;
-    }
 
     private void splitAndSetAuthorInfo(){
         Pattern p = Pattern.compile("[^(<)]*");
@@ -48,7 +37,7 @@ public class Author {
         if(m.find()) {
             name_string = m.group(0).trim();
             if(name_string.contains(" ")) {
-                forename = name_string.substring(0, name_string.indexOf(" ")-1);
+                forname = name_string.substring(0, name_string.indexOf(" ")-1);
                 surname = name_string.substring(name_string.indexOf(" ")+1, name_string.length()-1);
             }
             else

@@ -69,7 +69,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
 
         final ListView listView = (ListView) findViewById(R.id.lv_newsgroups);
         items = new ArrayList<>();
-        adapter = new NewsGroupAdapter(this, items); //R.layout.entry_info
+        adapter = new NewsGroupAdapter(this, items);
         listView.setAdapter(adapter);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
@@ -104,7 +104,13 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
                     responseText.append("\n" + changedItems.get(i).getName() + " - subscribed to " + changedItems.get(i).isSubscribed());
                 }
 
-                AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
+                        return null;
+                    }
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
                 Toast.makeText(getApplicationContext(), responseText, Toast.LENGTH_SHORT).show();
             }
@@ -300,7 +306,7 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
             } else {
                 holder = (ViewHolder) row.getTag();
             }
-            NewsGroupEntry entry = getItem(position); //getItem(position);
+            NewsGroupEntry entry = getItem(position);
             holder.entries.setText(" (" + entry.getArticleCount() + ")");
             holder.name.setText(entry.getName());
             holder.name.setChecked(entry.isSubscribed());

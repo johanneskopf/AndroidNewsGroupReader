@@ -54,10 +54,6 @@ public class NewsGroupArticle {
         return subject_string;
     }
 
-    public String getFrom() {
-        return from;
-    }
-
     public List<String> getReferences() {
         return references;
     }
@@ -79,11 +75,7 @@ public class NewsGroupArticle {
         AzureService.getInstance().readArticleChanged(this);
     }
 
-    public int getDepth() {
-        return depth_;
-    }
-
-    public void setDepth(int depth) {
+   public void setDepth(int depth) {
         this.depth_ = depth;
     }
 

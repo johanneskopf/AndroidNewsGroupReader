@@ -6,8 +6,7 @@ import java.util.Comparator;
 
 public class ArticleSorter implements Comparator<NewsGroupArticle> {
 
-    public ArticleSorter(NewsGroupSortType type)
-    {
+    public ArticleSorter(NewsGroupSortType type) {
         this.newsGroupSortType = type;
     }
 
@@ -22,14 +21,8 @@ public class ArticleSorter implements Comparator<NewsGroupArticle> {
         else if(newsGroupSortType == NewsGroupSortType.DATE)
         {
             return o1.getDate().getDate().compareTo(o2.getDate().getDate()) * -1;
-        }
-        else if(newsGroupSortType == NewsGroupSortType.SUBJECT)
-        {
+        } else {
             return o1.getSubjectString().compareTo(o2.getSubjectString());
-        }
-        else
-        {
-            throw new UnsupportedOperationException("Sort Operator not Implemented");
         }
     }
 }

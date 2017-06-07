@@ -50,10 +50,9 @@ public class NewsGroupService {
         return newsgroupEntries;
     }
 
-    public static int safeLongToInt(long l) {
+    public static int safeLongToInt(long l) throws IllegalArgumentException {
         if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException
-                    (l + " cannot be cast to int without changing its value.");
+            throw new IllegalArgumentException(l + " cannot be cast to int without changing its value.");
         }
         return (int) l;
     }
@@ -68,7 +67,7 @@ public class NewsGroupService {
 
         for (Article article : client.iterateArticleInfo(first, last)) {
             int references = article.getReferences().length;
-            if(references == 0)
+            if (references == 0)
                 articles.put(article.getArticleId(), new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
             else {
                 NewsGroupArticle ngArticle = new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
@@ -86,7 +85,7 @@ public class NewsGroupService {
 
         String article_text = "";
         int value;
-        while((value = r.read()) != -1){
+        while ((value = r.read()) != -1) {
             article_text += (char) value;
         }
 
@@ -96,11 +95,11 @@ public class NewsGroupService {
     public boolean post(String userName, String userMail, String articleText,
                         String subject, String group) {
         try {
-            if(!client.isAllowedToPost())
-                throw new IOException("Client is not allowed to post to NG");
+            if (!client.isAllowedToPost())
+                return false;
 
             Writer writer = client.postArticle();
-            if(writer == null) { // failure
+            if (writer == null) {
                 Log.d("NGS", "writer is null");
                 return false;
             }
@@ -109,13 +108,11 @@ public class NewsGroupService {
                     group, null, null));
 
             writer.close();
-            if(!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) {
                 Log.d("NGS", "pending is false");
                 return false;
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
         return true;
@@ -124,11 +121,11 @@ public class NewsGroupService {
     public boolean answer(String userName, String userMail, String articleText, String subject,
                           String group, String articleId, List<String> references) {
         try {
-            if(!client.isAllowedToPost())
-                throw new IOException("Client is not allowed to post to NG");
+            if (!client.isAllowedToPost())
+                return false;
 
             Writer writer = client.postArticle();
-            if(writer == null) { // failure
+            if (writer == null) {
                 Log.d("NGS", "writer is null");
                 return false;
             }
@@ -137,13 +134,12 @@ public class NewsGroupService {
                     articleId, references));
 
             writer.close();
-            if(!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) {
                 Log.d("NGS", "pending is false");
                 return false;
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
         return true;
@@ -152,7 +148,6 @@ public class NewsGroupService {
     public String constructNNTPMessage(String userName, String userMail, String articleText,
                                        String subject, String group, String articleId,
                                        List<String> references) {
-        //TODO: insert user credentials here
         SimpleNNTPHeader httpHeader = new SimpleNNTPHeader(userName + " <" + userMail + ">", subject);
         httpHeader.addNewsgroup(group);
         if (references != null) {

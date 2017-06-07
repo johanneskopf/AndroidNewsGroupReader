@@ -1,8 +1,11 @@
 package com.freeteam01.androidnewsgroupreader;
 
+import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AutoCompleteTextView;
@@ -10,6 +13,8 @@ import android.widget.Button;
 
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.UserSetting;
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+
+import java.util.concurrent.ExecutionException;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -27,6 +32,10 @@ public class SettingsActivity extends AppCompatActivity {
         forenameView = (AutoCompleteTextView) findViewById(R.id.forename);
         surnameView = (AutoCompleteTextView) findViewById(R.id.surname);
 
+        if (!AzureService.isInitialized()) {
+            final Context context = this;
+            AzureService.Initialize(context, AzureService.createClient(context));
+        }
         UserSetting userSetting = AzureService.getInstance().getUserSetting();
         if(userSetting != null)
         {
@@ -64,8 +73,16 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(forename) && !TextUtils.isEmpty(surname)) {
-            UserSetting entry = new UserSetting(null, email, forename, surname);
-            AzureService.getInstance().persist(entry);
+            final UserSetting entry = new UserSetting(null, email, forename, surname);
+
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    AzureService.getInstance().persist(entry);
+                    return null;
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
             onBackPressed();
         }
     }

@@ -24,16 +24,8 @@ public class NewsGroupEntry {
         this.name = name;
     }
 
-    public String getId() {
-        return id;
-    }
-
     public int getArticleCount() {
         return articleCount;
-    }
-
-    public void setArticleCount(int articleCount) {
-        this.articleCount = articleCount;
     }
 
     public String getName() {
