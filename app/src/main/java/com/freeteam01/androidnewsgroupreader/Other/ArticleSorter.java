@@ -17,14 +17,7 @@ public class ArticleSorter implements Comparator<NewsGroupArticle> {
     public int compare(NewsGroupArticle o1, NewsGroupArticle o2) {
         if(newsGroupSortType == NewsGroupSortType.AUTHOR)
         {
-            if(o1.getAuthor().getSurname() != null && o2.getAuthor().getSurname() != null)
-                return o1.getAuthor().getSurname().toLowerCase().compareTo(o2.getAuthor().getSurname().toLowerCase());
-            if(o1.getAuthor().getSurname() == null && o2.getAuthor().getSurname() != null)
-                return o1.getAuthor().getNameString().toLowerCase().compareTo(o2.getAuthor().getSurname().toLowerCase());
-            if(o1.getAuthor().getSurname() != null && o2.getAuthor().getSurname() == null)
-                return o1.getAuthor().getSurname().toLowerCase().compareTo(o2.getAuthor().getNameString().toLowerCase());
-            else
-                return o1.getAuthor().getNameString().toLowerCase().compareTo(o2.getAuthor().getNameString().toLowerCase());
+            return o1.getAuthor().getNameString().compareTo(o2.getAuthor().getNameString());
         }
         else if(newsGroupSortType == NewsGroupSortType.DATE)
         {
