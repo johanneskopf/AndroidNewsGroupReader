@@ -50,10 +50,9 @@ public class NewsGroupService {
         return newsgroupEntries;
     }
 
-    public static int safeLongToInt(long l) {
+    public static int safeLongToInt(long l) throws IllegalArgumentException {
         if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException
-                    (l + " cannot be cast to int without changing its value.");
+            throw new IllegalArgumentException(l + " cannot be cast to int without changing its value.");
         }
         return (int) l;
     }
@@ -68,7 +67,7 @@ public class NewsGroupService {
 
         for (Article article : client.iterateArticleInfo(first, last)) {
             int references = article.getReferences().length;
-            if(references == 0)
+            if (references == 0)
                 articles.put(article.getArticleId(), new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
             else {
                 NewsGroupArticle ngArticle = new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
@@ -86,7 +85,7 @@ public class NewsGroupService {
 
         String article_text = "";
         int value;
-        while((value = r.read()) != -1){
+        while ((value = r.read()) != -1) {
             article_text += (char) value;
         }
 
@@ -94,13 +93,13 @@ public class NewsGroupService {
     }
 
     public boolean post(String user_name, String user_mail, String article_text,
-                        String subject, String group){
+                        String subject, String group) {
         try {
-            if(!client.isAllowedToPost())
-                throw new IOException("Client is not allowed to post to NG");
+            if (!client.isAllowedToPost())
+                return false;
 
             Writer writer = client.postArticle();
-            if(writer == null) { // failure
+            if (writer == null) { // failure
                 Log.d("NGS", "writer is null");
                 return false;
             }
@@ -109,26 +108,24 @@ public class NewsGroupService {
                     group, null, null));
 
             writer.close();
-            if(!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) { // failure
                 Log.d("NGS", "pending is false");
                 return false;
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
         return true;
     }
 
     public boolean answer(String user_name, String user_mail, String article_text, String subject,
-                          String group, String article_id, List<String> references){
+                          String group, String article_id, List<String> references) {
         try {
-            if(!client.isAllowedToPost())
-                throw new IOException("Client is not allowed to post to NG");
+            if (!client.isAllowedToPost())
+                return false;
 
             Writer writer = client.postArticle();
-            if(writer == null) { // failure
+            if (writer == null) { // failure
                 Log.d("NGS", "writer is null");
                 return false;
             }
@@ -137,13 +134,12 @@ public class NewsGroupService {
                     article_id, references));
 
             writer.close();
-            if(!client.completePendingCommand()) { // failure
+            if (!client.completePendingCommand()) { // failure
                 Log.d("NGS", "pending is false");
                 return false;
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
         return true;
@@ -151,14 +147,14 @@ public class NewsGroupService {
 
     public String constructNNTPMessage(String user_name, String user_mail, String article_text,
                                        String subject, String group, String article_id,
-                                       List<String> references){
+                                       List<String> references) {
         //TODO: insert user credentials here
-        SimpleNNTPHeader nntp_header = new SimpleNNTPHeader(user_name +  " <" + user_mail + ">", subject);
+        SimpleNNTPHeader nntp_header = new SimpleNNTPHeader(user_name + " <" + user_mail + ">", subject);
         //nntp_header.addNewsgroup(group);
         nntp_header.addNewsgroup(group);
 
         //System.out.println(references);
-        if(references != null) {
+        if (references != null) {
             String nntp_reference = "";
 
             if (references.size() != 0) {

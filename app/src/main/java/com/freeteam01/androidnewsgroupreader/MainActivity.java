@@ -151,33 +151,22 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         sort_by_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sort_by_spinner_.setAdapter(sort_by_spinner_adapter_);
 
-
-        //        AzureService.getInstance().addAzureServiceEventListener(this);
-        Log.d("AzureService", "MainActivity subscribed to AzureEvent");
-//        if (AzureService.getInstance().isAzureServiceEventFired()) {
-//            OnNewsgroupsLoaded(AzureService.getInstance().getNewsGroupEntries());
-//            Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
-//        }
-
+        final Context context = this;
         if (!AzureService.isInitialized()) {
-            Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
-            AzureService.Initialize(this);
-//            Log.d("AzureService", "MainActivity - AzureService.getInstance()");
-//            AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, this);
-//            Log.d("AzureService", "MainActivity subscribed to AzureEvent");
-//            if (AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class)) {
-//                OnLoaded(SubscribedNewsgroup.class, AzureService.getInstance().getSubscribedNewsgroups());
-//                Log.d("AzureService", "MainActivity loaded entries as AzureEvent was already fired");
-//            }
-//
-//
-//            AzureService.getInstance().addAzureServiceEventListener(ReadArticle.class, this);
-//            if (AzureService.getInstance().isAzureServiceEventFired(ReadArticle.class)) {
-//                OnLoaded(ReadArticle.class, AzureService.getInstance().getReadArticles());
-//            }
-//            AzureService.getInstance().authenticate();
-        }
+            AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+                @Override
+                protected String doInBackground(Void... params) {
+                    AzureService.Initialize(context, AzureService.createClient(context));
+                    return null;
+                }
 
+                @Override
+                protected void onPostExecute(String result) {
+                    super.onPostExecute(result);
+                    OnInitializedAzure();
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
 
         showNewsgroupServers();
 
@@ -197,13 +186,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
         });
 
         subscribed_newsgroups_spinner_ = (Spinner) findViewById(R.id.newsgroups_spinner);
-        subscribed_spinner_adapter_ = new NewsGroupSubscribedSpinnerAdapter(this, new ArrayList<String>());
-        subscribed_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        subscribed_newsgroups_spinner_.setAdapter(subscribed_spinner_adapter_);
-
-        post_list_view_ = (ListView) findViewById(R.id.treeList);
-        post_view_adapter_ = new PostViewAdapter(this, post_list_view_, this, new ArrayList<NewsGroupArticle>());
-        post_list_view_.setAdapter(post_view_adapter_);
 
         subscribed_newsgroups_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -222,6 +204,13 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 showNewsGroupArticles();
             }
         });
+        subscribed_spinner_adapter_ = new NewsGroupSubscribedSpinnerAdapter(this, new ArrayList<String>());
+        subscribed_spinner_adapter_.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        subscribed_newsgroups_spinner_.setAdapter(subscribed_spinner_adapter_);
+
+        post_list_view_ = (ListView) findViewById(R.id.treeList);
+        post_view_adapter_ = new PostViewAdapter(this, post_list_view_, this, new ArrayList<NewsGroupArticle>());
+        post_list_view_.setAdapter(post_view_adapter_);
 
         sort_by_spinner_.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -289,11 +278,9 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 }
             }
         });
+    }
 
-        if (!AzureService.isInitialized()) {
-            Log.d("AzureService", "MainActivity - AzureService.Initialize(this)");
-            AzureService.Initialize(this);
-        }
+    private void OnInitializedAzure() {
 
     }
 

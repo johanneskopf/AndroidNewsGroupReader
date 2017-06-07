@@ -3,10 +3,6 @@ package com.freeteam01.androidnewsgroupreader.Models;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by marti on 5/29/17.
- */
-
 public class NewsGroupPostArticle {
     private String from;
     private String subject;

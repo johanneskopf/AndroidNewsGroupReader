@@ -2,7 +2,6 @@ package com.freeteam01.androidnewsgroupreader.Services;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.CookieManager;
@@ -14,10 +13,10 @@ import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.Server;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.UserSetting;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
 import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
 import com.microsoft.windowsazure.mobileservices.table.query.Query;
-import com.microsoft.windowsazure.mobileservices.table.query.QueryOperations;
 import com.microsoft.windowsazure.mobileservices.table.query.QueryOrder;
 import com.microsoft.windowsazure.mobileservices.table.sync.MobileServiceSyncContext;
 import com.microsoft.windowsazure.mobileservices.table.sync.MobileServiceSyncTable;
@@ -33,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.tableName;
+
 public class AzureService {
     private static final String SHAREDPREFFILE = "temp";
     private static final String USERIDPREF = "uid";
@@ -43,7 +44,7 @@ public class AzureService {
     private static AzureService instance = null;
 
     private Context context = null;
-    private String mobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
+    private static String mobileBackendUrl = "https://newsgroupreader.azurewebsites.net";
     private MobileServiceClient client;
 
     private MobileServiceSyncTable<ReadArticle> readArticleTable;
@@ -59,8 +60,9 @@ public class AzureService {
     private Map<Class<?>, List<AzureServiceEvent>> azureServiceEventListeners;
     private Map<Class<?>, Boolean> azureServiceEventFired;
 
-    private AzureService(Context context) {
+    private AzureService(Context context, MobileServiceClient client) {
         this.context = context;
+        this.client = client;
         azureServiceEventListeners = new HashMap<>();
         azureServiceEventFired = new HashMap<>();
 
@@ -69,18 +71,18 @@ public class AzureService {
         servers = new ArrayList<>();
         userSettings = new ArrayList<>();
 
-        try {
+/*        try {
             client = new MobileServiceClient(mobileBackendUrl, context);
         } catch (MalformedURLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         authenticate();
     }
 
-    public static void Initialize(Context context) {
+    public static void Initialize(Context context, MobileServiceClient client) {
         if (instance == null) {
-            instance = new AzureService(context);
+            instance = new AzureService(context, client);
         } else {
             throw new IllegalStateException("AzureServiceAdapter is already initialized");
         }
@@ -99,6 +101,15 @@ public class AzureService {
 
     public MobileServiceClient getClient() {
         return client;
+    }
+
+    public static MobileServiceClient createClient(Context context) {
+        try {
+            return new MobileServiceClient(mobileBackendUrl, context);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public List<ReadArticle> getReadArticles() {
@@ -129,10 +140,13 @@ public class AzureService {
         subscribedNewsgroupTable = client.getSyncTable("SubscribedNewsgroup", SubscribedNewsgroup.class);
         userSettingTable = client.getSyncTable("UserSetting", UserSetting.class);
         try {
-            initLocalStore().get();
+            initLocalStore(new LocalStoreCallback());
         } catch (InterruptedException | ExecutionException | MobileServiceLocalStoreException e) {
             e.printStackTrace();
         }
+    }
+
+    public void onInitLocalStore() {
         loadLocalData();
     }
 
@@ -186,93 +200,88 @@ public class AzureService {
     }
 
     private void loadLocalData() {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+        try {
+            final List<SubscribedNewsgroup> storedSubscribedNewsgroupEntries = getLocalData(SubscribedNewsgroup.class, subscribedNewsgroupTable);
+            subscribedNewsgroups.clear();
+            subscribedNewsgroups.addAll(storedSubscribedNewsgroupEntries);
+
+            RuntimeStorage.instance().setNewsgroups(storedSubscribedNewsgroupEntries);
+
+            final List<Server> storedServerEntries = getLocalData(Server.class, serverTable);
+            servers.clear();
+            servers.addAll(storedServerEntries);
+            final List<ReadArticle> storedReadArticleEntries = getLocalData(ReadArticle.class, readArticleTable);
+            readArticles.clear();
+            readArticles.addAll(storedReadArticleEntries);
+            RuntimeStorage.instance().setReadArticles(storedReadArticleEntries);
+            final List<UserSetting> storedUserSettingEntries = getLocalData(UserSetting.class, userSettingTable);
+            userSettings.clear();
+            userSettings.addAll(storedUserSettingEntries);
+            if (userSettings.size() > 0)
+                RuntimeStorage.instance().setUserSetting(userSettings.get(0));
+            Log.d("AzureService", "loaded data from local storage");
+        } catch (final Exception e) {
+            Log.d("AzureService", "loadLocalData: " + e.getMessage());
+        }
+        Log.d("AzureService", "loaded data from local storage");
+
+
+        // TODO: try to solve it with this runOnUiThread
+/*        runOnUiThread(new Runnable() {
             @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    final List<SubscribedNewsgroup> storedSubscribedNewsgroupEntries = getLocalData(SubscribedNewsgroup.class, subscribedNewsgroupTable);
-                    subscribedNewsgroups.clear();
-                    subscribedNewsgroups.addAll(storedSubscribedNewsgroupEntries);
+            public void run() {
 
-                    RuntimeStorage.instance().setNewsgroups(storedSubscribedNewsgroupEntries);
-
-                    final List<Server> storedServerEntries = getLocalData(Server.class, serverTable);
-                    servers.clear();
-                    servers.addAll(storedServerEntries);
-                    final List<ReadArticle> storedReadArticleEntries = getLocalData(ReadArticle.class, readArticleTable);
-                    readArticles.clear();
-                    readArticles.addAll(storedReadArticleEntries);
-                    RuntimeStorage.instance().setReadArticles(storedReadArticleEntries);
-                    final List<UserSetting> storedUserSettingEntries = getLocalData(UserSetting.class, userSettingTable);
-                    userSettings.clear();
-                    userSettings.addAll(storedUserSettingEntries);
-                    if(userSettings.size() > 0)
-                    {
-                        RuntimeStorage.instance().setUserSetting(userSettings.get(0));
-                    }
-                    Log.d("AzureService", "loaded data from local storage");
-                } catch (final Exception e) {
-                    Log.d("AzureService", "loadLocalData: " + e.getMessage());
-                }
-                return null;
             }
+        });*/
+        fireAzureServiceEvents();
 
-            @Override
-            protected void onPostExecute(Void result) {
-                fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
-                fireAzureServiceEvent(Server.class, servers);
-                fireAzureServiceEvent(ReadArticle.class, readArticles);
-                fireAzureServiceEvent(UserSetting.class, userSettings);
-                syncLocalWithRemote();
-            }
-        };
 
-        runAsyncTask(task);
+        syncLocalWithRemote();
+    }
+
+    private void fireAzureServiceEvents() {
+        fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
+        fireAzureServiceEvent(Server.class, servers);
+        fireAzureServiceEvent(ReadArticle.class, readArticles);
+        fireAzureServiceEvent(UserSetting.class, userSettings);
     }
 
     private void syncLocalWithRemote() {
 
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    Log.d("AzureService", "START: sync items with remote");
-                    final List<SubscribedNewsgroup> storedSubscribedNewsgroupEntries = syncData(SubscribedNewsgroup.class, subscribedNewsgroupTable);
-                    Log.d("AzureServiceItems", "got " + storedSubscribedNewsgroupEntries.size() + " storedSubscribedNewsgroupEntries");
-                    for (SubscribedNewsgroup sng : storedSubscribedNewsgroupEntries) {
-                        Log.d("AzureServiceItems", sng.toString());
-                    }
-                    subscribedNewsgroups.clear();
-                    subscribedNewsgroups.addAll(storedSubscribedNewsgroupEntries);
-                    RuntimeStorage.instance().setNewsgroups(storedSubscribedNewsgroupEntries);
-                    final List<Server> storedServerEntries = syncData(Server.class, serverTable);
-                    servers.clear();
-                    servers.addAll(storedServerEntries);
-                    final List<ReadArticle> storedReadArticleEntries = syncData(ReadArticle.class, readArticleTable);
-                    readArticles.clear();
-                    readArticles.addAll(storedReadArticleEntries);
-                    RuntimeStorage.instance().setReadArticles(storedReadArticleEntries);
-                    final List<UserSetting> storedUserSettingEntries = syncData(UserSetting.class, userSettingTable);
-                    userSettings.clear();
-                    userSettings.addAll(storedUserSettingEntries);
-                    Log.d("AzureService", "synced items with remote");
+        try {
+            Log.d("AzureService", "START: sync items with remote");
+            final List<SubscribedNewsgroup> storedSubscribedNewsgroupEntries = syncData(SubscribedNewsgroup.class, subscribedNewsgroupTable);
+            Log.d("AzureServiceItems", "got " + storedSubscribedNewsgroupEntries.size() + " storedSubscribedNewsgroupEntries");
+            for (SubscribedNewsgroup sng : storedSubscribedNewsgroupEntries) {
+                Log.d("AzureServiceItems", sng.toString());
+            }
+            subscribedNewsgroups.clear();
+            subscribedNewsgroups.addAll(storedSubscribedNewsgroupEntries);
+            RuntimeStorage.instance().setNewsgroups(storedSubscribedNewsgroupEntries);
+            final List<Server> storedServerEntries = syncData(Server.class, serverTable);
+            servers.clear();
+            servers.addAll(storedServerEntries);
+            final List<ReadArticle> storedReadArticleEntries = syncData(ReadArticle.class, readArticleTable);
+            readArticles.clear();
+            readArticles.addAll(storedReadArticleEntries);
+            RuntimeStorage.instance().setReadArticles(storedReadArticleEntries);
+            final List<UserSetting> storedUserSettingEntries = syncData(UserSetting.class, userSettingTable);
+            userSettings.clear();
+            userSettings.addAll(storedUserSettingEntries);
+            Log.d("AzureService", "synced items with remote");
 //                    fireAzureServiceEvent(newsGroupEntries);
-                } catch (final Exception e) {
-                    Log.d("AzureService", "syncLocalWithRemote: " + e.getMessage());
-                }
-                return null;
-            }
+        } catch (final Exception e) {
+            Log.d("AzureService", "syncLocalWithRemote: " + e.getMessage());
+        }
 
+        // TODO: try to solve it with this runOnUiThread
+/*        runOnUiThread(new Runnable() {
             @Override
-            protected void onPostExecute(Void result) {
-                fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
-                fireAzureServiceEvent(Server.class, servers);
-                fireAzureServiceEvent(ReadArticle.class, readArticles);
-                fireAzureServiceEvent(UserSetting.class, userSettings);
-            }
-        };
+            public void run() {
 
-        runAsyncTask(task);
+            }
+        });*/
+        fireAzureServiceEvents();
     }
 
     public <T> void addAzureServiceEventListener(Class<T> classType, AzureServiceEvent listener) {
@@ -315,7 +324,7 @@ public class AzureService {
     }
 
     public <T> List<T> getLocalData(Class<T> classType, MobileServiceSyncTable<T> table) throws ExecutionException, InterruptedException {
-        Query query = QueryOperations.tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
+        Query query = tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
         return table.read(query).get();
     }
 
@@ -324,167 +333,133 @@ public class AzureService {
         syncContext.push().get();
         table.pull(null).get();
         Log.d("AzureService", "syncData: " + classType.getSimpleName());
-        Query query = QueryOperations.tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
+        Query query = tableName(classType.getSimpleName()).field("userId").eq(getClient().getCurrentUser().getUserId()).orderBy("name", QueryOrder.Ascending);
         return table.read(query).get();
     }
 
-    private AsyncTask<Void, Void, Void> runAsyncTask(AsyncTask<Void, Void, Void> task) {
-        return task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
+    private void initLocalStore(final ILocalStoreCallback function) throws MobileServiceLocalStoreException, ExecutionException, InterruptedException {
+        try {
+            MobileServiceSyncContext syncContext = client.getSyncContext();
+            if (syncContext.isInitialized())
+                return;
 
-    private AsyncTask<Void, Void, Void> initLocalStore() throws MobileServiceLocalStoreException, ExecutionException, InterruptedException {
+            int databaseVersion = 1;
+            String databaseName = "OfflineStore";
+            SQLiteLocalStore localStore = new SQLiteLocalStore(client.getContext(), databaseName, null, databaseVersion);
 
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    MobileServiceSyncContext syncContext = client.getSyncContext();
-                    if (syncContext.isInitialized())
-                        return null;
+            Map<String, ColumnDataType> tableDefinition = new HashMap<>();
+            tableDefinition.put("id", ColumnDataType.String);
+            tableDefinition.put("userId", ColumnDataType.String);
+            tableDefinition.put("articleId", ColumnDataType.String);
+            localStore.defineTable("ReadArticle", tableDefinition);
 
-                    int databaseVersion = 1;
-                    String databaseName = "OfflineStore";
-                    SQLiteLocalStore localStore = new SQLiteLocalStore(client.getContext(), databaseName, null, databaseVersion);
+            tableDefinition = new HashMap<>();
+            tableDefinition.put("id", ColumnDataType.String);
+            tableDefinition.put("userId", ColumnDataType.String);
+            tableDefinition.put("name", ColumnDataType.String);
+            tableDefinition.put("url", ColumnDataType.String);
+            localStore.defineTable("Server", tableDefinition);
 
-                    Map<String, ColumnDataType> tableDefinition = new HashMap<>();
-                    tableDefinition.put("id", ColumnDataType.String);
-                    tableDefinition.put("userId", ColumnDataType.String);
-                    tableDefinition.put("articleId", ColumnDataType.String);
-                    localStore.defineTable("ReadArticle", tableDefinition);
+            tableDefinition = new HashMap<>();
+            tableDefinition.put("id", ColumnDataType.String);
+            tableDefinition.put("userId", ColumnDataType.String);
+            tableDefinition.put("serverId", ColumnDataType.String);
+            tableDefinition.put("name", ColumnDataType.String);
+            localStore.defineTable("SubscribedNewsgroup", tableDefinition);
 
-                    tableDefinition = new HashMap<>();
-                    tableDefinition.put("id", ColumnDataType.String);
-                    tableDefinition.put("userId", ColumnDataType.String);
-                    tableDefinition.put("name", ColumnDataType.String);
-                    tableDefinition.put("url", ColumnDataType.String);
-                    localStore.defineTable("Server", tableDefinition);
+            tableDefinition = new HashMap<>();
+            tableDefinition.put("id", ColumnDataType.String);
+            tableDefinition.put("userId", ColumnDataType.String);
+            tableDefinition.put("email", ColumnDataType.String);
+            tableDefinition.put("forename", ColumnDataType.String);
+            tableDefinition.put("surname", ColumnDataType.String);
+            localStore.defineTable("UserSetting", tableDefinition);
 
-                    tableDefinition = new HashMap<>();
-                    tableDefinition.put("id", ColumnDataType.String);
-                    tableDefinition.put("userId", ColumnDataType.String);
-                    tableDefinition.put("serverId", ColumnDataType.String);
-                    tableDefinition.put("name", ColumnDataType.String);
-                    localStore.defineTable("SubscribedNewsgroup", tableDefinition);
+            SimpleSyncHandler handler = new SimpleSyncHandler();
+            ListenableFuture<Void> ret = syncContext.initialize(localStore, handler);
+            ret.get();
 
-                    tableDefinition = new HashMap<>();
-                    tableDefinition.put("id", ColumnDataType.String);
-                    tableDefinition.put("userId", ColumnDataType.String);
-                    tableDefinition.put("email", ColumnDataType.String);
-                    tableDefinition.put("forename", ColumnDataType.String);
-                    tableDefinition.put("surname", ColumnDataType.String);
-                    localStore.defineTable("UserSetting", tableDefinition);
-
-                    SimpleSyncHandler handler = new SimpleSyncHandler();
-                    syncContext.initialize(localStore, handler).get();
-                } catch (final Exception e) {
-                    Log.d("AzureService", "initLocalStore: " + e.getMessage());
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
-
-        return runAsyncTask(task);
+            function.callback();
+        } catch (final Exception e) {
+//            Log.d("AzureService", "initLocalStore: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void persistSubscribedNewsgroups(final List<NewsGroupEntry> subscribedNewsgroupEntries) {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    for (NewsGroupEntry changedEntry : subscribedNewsgroupEntries) {
-                        SubscribedNewsgroup subscribedNewsgroup = new SubscribedNewsgroup(getClient().getCurrentUser().getUserId(), changedEntry.getServer().getName(), changedEntry.getName());
-                        if (subscribedNewsgroups.contains(subscribedNewsgroup)) {
-                            int index = subscribedNewsgroups.indexOf(subscribedNewsgroup);
-                            subscribedNewsgroup = subscribedNewsgroups.get(index);
-                            if (changedEntry.isSubscribed()) {
-                                Log.d("AzureService", "Updating subscribedNewsgroup: " + subscribedNewsgroup);
-                                updateItemInTable(subscribedNewsgroup, subscribedNewsgroupTable);
-                                subscribedNewsgroups.set(index, subscribedNewsgroup);
-                            } else {
-                                Log.d("AzureService", "Deleting subscribedNewsgroup: " + subscribedNewsgroup);
-                                deleteItemFromTable(subscribedNewsgroup, subscribedNewsgroupTable);
-                                subscribedNewsgroups.remove(index);
-                            }
-                        } else {
-                            if (changedEntry.isSubscribed()) {
-                                Log.d("AzureService", "Adding subscribedNewsgroup: " + subscribedNewsgroup);
-                                subscribedNewsgroup = addItemInTable(subscribedNewsgroup, subscribedNewsgroupTable);
-                                subscribedNewsgroups.add(subscribedNewsgroup);
-                            }
-                        }
-                    }
-                    subscribedNewsgroupEntries.clear();
-                    // TODO check if loadLocalData is good here
-                    loadLocalData();
-                    fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
-                    Log.d("AzureService", "subscribedNewsgroupEntries successful");
-                } catch (ExecutionException | InterruptedException e) {
-                    Log.d("AzureService", "subscribedNewsgroupEntries: " + e.getMessage());
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
-
-        runAsyncTask(task);
-    }
-
-    public <T> void persist(final Class<T> classType, final T entry, final List<T> localEntries, final MobileServiceSyncTable<T> table) {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    if (localEntries.contains(entry)) {
-                        int index = localEntries.indexOf(entry);
-                        Log.d("AzureService", "Updating entry: " + entry.toString());
-                        updateItemInTable(entry, table);
-                        localEntries.set(index, entry);
+        try {
+            for (NewsGroupEntry changedEntry : subscribedNewsgroupEntries) {
+                SubscribedNewsgroup subscribedNewsgroup = new SubscribedNewsgroup(getClient().getCurrentUser().getUserId(), changedEntry.getServer().getName(), changedEntry.getName());
+                if (subscribedNewsgroups.contains(subscribedNewsgroup)) {
+                    int index = subscribedNewsgroups.indexOf(subscribedNewsgroup);
+                    subscribedNewsgroup = subscribedNewsgroups.get(index);
+                    if (changedEntry.isSubscribed()) {
+                        Log.d("AzureService", "Updating subscribedNewsgroup: " + subscribedNewsgroup);
+                        updateItemInTable(subscribedNewsgroup, subscribedNewsgroupTable);
+                        subscribedNewsgroups.set(index, subscribedNewsgroup);
                     } else {
-                        Log.d("AzureService", "Adding entry: " + entry.toString());
-                        T addedEntry = addItemInTable(entry, table);
-                        localEntries.add(addedEntry);
+                        Log.d("AzureService", "Deleting subscribedNewsgroup: " + subscribedNewsgroup);
+                        deleteItemFromTable(subscribedNewsgroup, subscribedNewsgroupTable);
+                        subscribedNewsgroups.remove(index);
                     }
-//                    fireAzureServiceEvent(classType, entries);
-                    Log.d("AzureService", "Entry of type " + classType + " persisted successfully");
-                } catch (ExecutionException | InterruptedException e) {
-                    Log.d("AzureService", "persist: " + e.getMessage());
-                    e.printStackTrace();
+                } else {
+                    if (changedEntry.isSubscribed()) {
+                        Log.d("AzureService", "Adding subscribedNewsgroup: " + subscribedNewsgroup);
+                        subscribedNewsgroup = addItemInTable(subscribedNewsgroup, subscribedNewsgroupTable);
+                        subscribedNewsgroups.add(subscribedNewsgroup);
+                    }
                 }
-                return null;
             }
-        };
-
-        runAsyncTask(task);
+            subscribedNewsgroupEntries.clear();
+            // TODO check if loadLocalData is good here
+            loadLocalData();
+            fireAzureServiceEvent(SubscribedNewsgroup.class, subscribedNewsgroups);
+            Log.d("AzureService", "subscribedNewsgroupEntries successful");
+        } catch (ExecutionException | InterruptedException e) {
+            Log.d("AzureService", "subscribedNewsgroupEntries: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    public <T> void persistSingle(final Class<T> classType, final T entry, final List<T> localEntries, final MobileServiceSyncTable<T> table) {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    if (localEntries.size() > 0) {
+    private <T> void persist(final Class<T> classType, final T entry, final List<T> localEntries, final MobileServiceSyncTable<T> table) {
+        try {
+            if (localEntries.contains(entry)) {
+                int index = localEntries.indexOf(entry);
+                Log.d("AzureService", "Updating entry: " + entry.toString());
+                updateItemInTable(entry, table);
+                localEntries.set(index, entry);
+            } else {
+                Log.d("AzureService", "Adding entry: " + entry.toString());
+                T addedEntry = addItemInTable(entry, table);
+                localEntries.add(addedEntry);
+            }
+//                    fireAzureServiceEvent(classType, entries);
+            Log.d("AzureService", "Entry of type " + classType + " persisted successfully");
+        } catch (ExecutionException | InterruptedException e) {
+            Log.d("AzureService", "persist: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private <T> void persistSingle(final Class<T> classType, final T entry, final List<T> localEntries, final MobileServiceSyncTable<T> table) {
+        try {
+            if (localEntries.size() > 0) {
 //                        T updateEntry = localEntries.get(0);
-                        Log.d("AzureService", "Updating entry: " + entry.toString());
-                        updateItemInTable(entry, table);
-                        localEntries.set(0, entry);
-                    } else {
-                        Log.d("AzureService", "Adding entry: " + entry.toString());
-                        T addedEntry = addItemInTable(entry, table);
-                        Log.d("AzureService", "Added entry: " + addedEntry.toString());
-                        localEntries.add(addedEntry);
-                    }
-//                    fireAzureServiceEvent(classType, entries);
-                    Log.d("AzureService", "Entry of type " + classType + " persisted successfully");
-                } catch (ExecutionException | InterruptedException e) {
-                    Log.d("AzureService", "persist: " + e.getMessage());
-                    e.printStackTrace();
-                }
-                return null;
+                Log.d("AzureService", "Updating entry: " + entry.toString());
+                updateItemInTable(entry, table);
+                localEntries.set(0, entry);
+            } else {
+                Log.d("AzureService", "Adding entry: " + entry.toString());
+                T addedEntry = addItemInTable(entry, table);
+                Log.d("AzureService", "Added entry: " + addedEntry.toString());
+                localEntries.add(addedEntry);
             }
-        };
-
-        runAsyncTask(task);
+//                    fireAzureServiceEvent(classType, entries);
+            Log.d("AzureService", "Entry of type " + classType + " persisted successfully");
+        } catch (ExecutionException | InterruptedException e) {
+            Log.d("AzureService", "persist: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void persist(UserSetting entry) {
@@ -528,9 +503,19 @@ public class AzureService {
         client.logout();
     }
 
+    public interface ILocalStoreCallback {
+        void callback();
+    }
+
+    public class LocalStoreCallback implements ILocalStoreCallback {
+        @Override
+        public void callback() {
+            onInitLocalStore();
+        }
+    }
+
     public void readArticleChanged(NewsGroupArticle newsGroupArticle) {
-        if(newsGroupArticle.getRead())
-        {
+        if (newsGroupArticle.getRead()) {
             persist(new ReadArticle(newsGroupArticle.getArticleID(), getClient().getCurrentUser().getUserId()));
         }
     }

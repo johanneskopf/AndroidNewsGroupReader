@@ -104,7 +104,13 @@ public class SubscribeActivity extends AppCompatActivity implements AzureService
                     responseText.append("\n" + changedItems.get(i).getName() + " - subscribed to " + changedItems.get(i).isSubscribed());
                 }
 
-                AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        AzureService.getInstance().persistSubscribedNewsgroups(changedItems);
+                        return null;
+                    }
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
                 Toast.makeText(getApplicationContext(), responseText, Toast.LENGTH_SHORT).show();
             }

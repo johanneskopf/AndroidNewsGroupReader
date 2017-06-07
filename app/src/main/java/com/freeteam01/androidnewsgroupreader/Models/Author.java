@@ -3,10 +3,6 @@ package com.freeteam01.androidnewsgroupreader.Models;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by christian on 31.05.17.
- */
-
 public class Author {
     private String forname;
     private String surname;

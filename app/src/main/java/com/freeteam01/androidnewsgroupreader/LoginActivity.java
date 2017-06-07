@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.freeteam01.androidnewsgroupreader.Services.AzureService;
+import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -66,7 +67,7 @@ public class LoginActivity extends AppCompatActivity {
 
         if (!AzureService.isInitialized())
         {
-            AzureService.Initialize(this);
+            AzureService.Initialize(this, AzureService.createClient(this));
             Log.d("AzureService", "LoginActivity - AzureService.Initialize(this)");
         }
     }
