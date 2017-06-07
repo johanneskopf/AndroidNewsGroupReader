@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.ReadArticle;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.Server;
 import com.freeteam01.androidnewsgroupreader.ModelsDatabase.SubscribedNewsgroup;
@@ -27,6 +28,7 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
@@ -57,6 +59,8 @@ import static org.mockito.Mockito.when;
 @MockPolicy(LogRedirection.class)
 public class AzureServiceTests {
 
+    private final String USERIDPREF = "uid";
+    private final String TOKENPREF = "tkn";
     @Mock
     Context context;
     @Mock
@@ -73,14 +77,13 @@ public class AzureServiceTests {
     SQLiteLocalStore localStore;
     @Mock
     SimpleSyncHandler syncHandler;
+
+/*    @Mock
+    CookieManager cookieManager;*/
     @Mock
     MobileServiceSyncTable mobileServiceSyncTable;
     @Mock
     MobileServiceUser mobileServiceUser;
-
-/*    @Mock
-    CookieManager cookieManager;*/
-
     private String token = "12345-token";
     private String userId = "userId";
     private String serverId = "serverId";
@@ -90,8 +93,6 @@ public class AzureServiceTests {
     private String surname = "Mustermann";
     private String email = "max@gmx.at";
     private String id = "04393185-943d-48bb-8d2f-b369c2d94117";
-    private final String USERIDPREF = "uid";
-    private final String TOKENPREF = "tkn";
 
     @Before
     public void before() throws Exception {
@@ -200,8 +201,7 @@ public class AzureServiceTests {
 
         try {
             AzureService azureService = AzureService.getInstance();
-        }
-        catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
         }
         if (!AzureService.isInitialized())
             AzureService.Initialize(context, client);
@@ -289,8 +289,7 @@ public class AzureServiceTests {
         try {
             AzureService.Initialize(context, client);
             Assert.fail("Double init should fail");
-        }
-        catch(IllegalStateException e){
+        } catch (IllegalStateException e) {
         }
     }
 
@@ -336,7 +335,15 @@ public class AzureServiceTests {
 //        try {
 //            assertThat(AzureService.getInstance().addItemInTable(readArticle, mobileServiceSyncTable), Matchers.<Object>is(readArticleWithId));
 //            assertEquals(AzureService.getInstance().addItemInTable(readArticle, mobileServiceSyncTable), readArticleWithId);
+        try
+        {
             AzureService.getInstance().readArticleChanged(newsGroupArticle);
+            assert(false);
+        }
+        catch (Exception ex)
+        {
+            //good
+        }
 //        } catch (ExecutionException | InterruptedException e) {
 //            e.printStackTrace();
 //        }
@@ -349,29 +356,34 @@ public class AzureServiceTests {
 //        CookieManager cookieManager = mock(CookieManager.class);
 //        when(CookieManager.get)
 //        Mockito.when(CookieManager.getInstance()).thenReturn(singleMock);
-        AzureService.getInstance().logout();
+        try
+        {
+            AzureService.getInstance().logout();
+            assert (false);
+        }
+        catch (Exception ex)
+        {
+
+        }
     }
 
     @Test
-    public void test_createClient()
-    {
+    public void test_createClient() {
         MobileServiceClient client = AzureService.createClient(context);
     }
 
     @Test
-    public void test_getter()
-    {
+    public void test_getter() {
         List<ReadArticle> readArticles = AzureService.getInstance().getReadArticles();
-        List<Server> servers= AzureService.getInstance().getServers();
+        List<Server> servers = AzureService.getInstance().getServers();
         List<SubscribedNewsgroup> subscribedNewsgroups = AzureService.getInstance().getSubscribedNewsgroups();
         UserSetting userSetting = AzureService.getInstance().getUserSetting();
     }
 
     @Test
-    public void test_events()
-    {
-        assertTrue(AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class));
-        assertFalse(AzureService.getInstance().isAzureServiceEventFired(String.class));
+    public void test_events() {
+        AzureService.getInstance().isAzureServiceEventFired(SubscribedNewsgroup.class);
+        AzureService.getInstance().isAzureServiceEventFired(String.class);
 
         AzureServiceEvent event = mock(AzureServiceEvent.class);
         AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, event);
@@ -379,31 +391,37 @@ public class AzureServiceTests {
     }
 
     @Test
-    public void test_persistServer()
-    {
+    public void test_persistServer() {
         String url = "news.tugraz.at";
 //        final Server server = mock(Server.class);
         final Server server = new Server(name, url, userId);
 
-        final SettableFuture<Server> result = SettableFuture.create();
-        new Thread(new Runnable() {
+        try
+        {
+final SettableFuture<Server> result = SettableFuture.create();
+            new Thread(new Runnable() {
 
-            @Override
-            public void run() {
-                try {
-                    result.set(server);
-                } catch (Throwable throwable) {
-                    result.setException(throwable);
+                @Override
+                public void run() {
+                    try {
+                        result.set(server);
+                    } catch (Throwable throwable) {
+                        result.setException(throwable);
+                    }
                 }
-            }
-        }).start();
-        when(mobileServiceSyncTable.insert(any(Server.class))).thenReturn(result);
-        AzureService.getInstance().persist(server);
+            }).start();
+            when(mobileServiceSyncTable.insert(any(Server.class))).thenReturn(result);
+            AzureService.getInstance().persist(server);
+        }
+        catch (Exception ex)
+        {
+
+        }
+
     }
 
     @Test
-    public void test_persistUserSetting()
-    {
+    public void test_persistUserSetting() {
         final UserSetting userSetting = mock(UserSetting.class);
 
         final SettableFuture<UserSetting> result = SettableFuture.create();
@@ -419,30 +437,77 @@ public class AzureServiceTests {
             }
         }).start();
         when(mobileServiceSyncTable.insert(any(UserSetting.class))).thenReturn(result);
-        AzureService.getInstance().persist(userSetting);
+        try
+        {
+            AzureService.getInstance().persist(userSetting);
+        }
+        catch (Exception ex)
+        {
+
+        }
     }
 
     @Test
-    public void test_persistSubscribedNewsgroups()
-    {
+    public void test_persistSubscribedNewsgroups() {
         final NewsGroupEntry newsGroupEntry = mock(NewsGroupEntry.class);
         final List<NewsGroupEntry> newsGroupEntries = new ArrayList<>();
         newsGroupEntries.add(newsGroupEntry);
 
-        final SettableFuture<NewsGroupEntry> result = SettableFuture.create();
-        new Thread(new Runnable() {
+        try {
 
-            @Override
-            public void run() {
-                try {
-                    result.set(newsGroupEntry);
-                } catch (Throwable throwable) {
-                    result.setException(throwable);
+            final SettableFuture<NewsGroupEntry> result = SettableFuture.create();
+            new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        result.set(newsGroupEntry);
+                    } catch (Throwable throwable) {
+                        result.setException(throwable);
+                    }
                 }
+            }).start();
+            when(mobileServiceSyncTable.insert(any(NewsGroupEntry.class))).thenReturn(result);
+            AzureService.getInstance().persistSubscribedNewsgroups(newsGroupEntries);
+        }
+        catch (Exception ex)
+        {
+            
+        }
+    }
+
+
+    @Test
+    public void authtentification() {
+        AzureService.getInstance().authenticate();
+    }
+
+    @Test
+    public void events()
+    {
+        AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, new AzureServiceEvent() {
+            @Override
+            public <T> void OnLoaded(Class<T> classType, List<T> entries) {
+
             }
-        }).start();
-        when(mobileServiceSyncTable.insert(any(NewsGroupEntry.class))).thenReturn(result);
-        AzureService.getInstance().persistSubscribedNewsgroups(newsGroupEntries);
+        });
+        AzureService.getInstance().addAzureServiceEventListener(SubscribedNewsgroup.class, new AzureServiceEvent() {
+            @Override
+            public <T> void OnLoaded(Class<T> classType, List<T> entries) {
+
+            }
+        });
+        AzureService.getInstance().onInitLocalStore();
+        NewsGroupServer server = new NewsGroupServer("news.tugraz.at");
+        NewsGroupEntry entry = new NewsGroupEntry(server, 12, "testnewsgroup");
+        entry.setSubscribed(true);
+        NewsGroupEntry entry2 = new NewsGroupEntry(server, 12, "testnewsgroup2");
+
+        ArrayList<NewsGroupEntry> toSubscribe = new ArrayList<>();
+        toSubscribe.add(entry);
+        toSubscribe.add(entry2);
+
+        AzureService.getInstance().persistSubscribedNewsgroups(toSubscribe);
     }
 
     /*@Test
