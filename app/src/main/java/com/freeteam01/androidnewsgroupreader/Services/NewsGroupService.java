@@ -4,24 +4,32 @@ import android.util.Log;
 
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupArticle;
 import com.freeteam01.androidnewsgroupreader.Models.NewsGroupEntry;
+import com.freeteam01.androidnewsgroupreader.Models.NewsGroupServer;
 
 import org.apache.commons.net.nntp.Article;
 import org.apache.commons.net.nntp.NNTPClient;
 import org.apache.commons.net.nntp.NewsgroupInfo;
+import org.apache.commons.net.nntp.SimpleNNTPHeader;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class NewsGroupService {
 
-    private static String hostname = "news.TUGraz.at";
+    private String hostname;
+    private NewsGroupServer server;
 
     private NNTPClient client;
+
+    public NewsGroupService(NewsGroupServer server) {
+        this.server = server;
+        this.hostname = server.getName();
+    }
 
     public void Connect() throws IOException {
         client = new NNTPClient();
@@ -37,55 +45,122 @@ public class NewsGroupService {
 
         List<NewsGroupEntry> newsgroupEntries = new ArrayList<>();
         for (NewsgroupInfo info : newsgroups) {
-            newsgroupEntries.add(new NewsGroupEntry(info.getArticleCountLong(), info.getNewsgroup(), false));
+            newsgroupEntries.add(new NewsGroupEntry(server, safeLongToInt(info.getArticleCountLong()), info.getNewsgroup()));
         }
         return newsgroupEntries;
     }
 
-    public List<NewsGroupArticle> getAllArticlesFromNewsgroup(String newsgroup) throws IOException {
+    public static int safeLongToInt(long l) throws IllegalArgumentException {
+        if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(l + " cannot be cast to int without changing its value.");
+        }
+        return (int) l;
+    }
+
+    public List<NewsGroupArticle> getAllArticlesFromNewsgroup(NewsGroupEntry newsgroup) throws IOException {
         NewsgroupInfo group = new NewsgroupInfo();
-        client.selectNewsgroup(newsgroup, group);
+        client.selectNewsgroup(newsgroup.getName(), group);
         long first = group.getFirstArticleLong();
         long last = group.getLastArticleLong();
+
         HashMap<String, NewsGroupArticle> articles = new HashMap<>();
-        SortedMap<Integer, List<Article>> articlesByDepth = new TreeMap<>();
 
         for (Article article : client.iterateArticleInfo(first, last)) {
             int references = article.getReferences().length;
-            if (!articlesByDepth.containsKey(references))
-                articlesByDepth.put(references, new ArrayList<Article>());
-
-            articlesByDepth.get(references).add(article);
-        }
-
-        for (Article article : articlesByDepth.get(0)) {
-            articles.put(article.getArticleId(), new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
-        }
-        articlesByDepth.remove(0);
-
-        for (List<Article> articleList : articlesByDepth.values()) {
-            for (Article article : articleList) {
-                NewsGroupArticle ngArticle = new NewsGroupArticle(article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
+            if (references == 0)
+                articles.put(article.getArticleId(), new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom()));
+            else {
+                NewsGroupArticle ngArticle = new NewsGroupArticle(newsgroup, article.getArticleId(), article.getSubject(), article.getDate(), article.getFrom());
                 ngArticle.addReferences(article.getReferences());
-                NewsGroupArticle root = articles.get(ngArticle.getReferences().get(0));
-                if(root == null)
-                    articles.put(article.getArticleId(), ngArticle);
-                else
+                for (NewsGroupArticle root : articles.values()) {
                     root.addArticle(ngArticle);
+                }
             }
         }
-
         return new ArrayList<>(articles.values());
     }
 
     public String getArticleText(String id) throws IOException {
-        Reader r = client.retrieveArticle(id);
+        Reader r = client.retrieveArticleBody(id);
+
         String article_text = "";
         int value;
-        while((value = r.read()) != -1){
+        while ((value = r.read()) != -1) {
             article_text += (char) value;
         }
-        article_text = article_text.substring(article_text.indexOf("\r\n\r\n"));
-        return article_text;
+
+        return new String(article_text.getBytes(StandardCharsets.ISO_8859_1));
     }
+
+    public boolean post(String userName, String userMail, String articleText,
+                        String subject, String group) {
+        try {
+            if (!client.isAllowedToPost())
+                return false;
+
+            Writer writer = client.postArticle();
+            if (writer == null) {
+                Log.d("NGS", "writer is null");
+                return false;
+            }
+
+            writer.write(constructNNTPMessage(userName, userMail, articleText, subject,
+                    group, null, null));
+
+            writer.close();
+            if (!client.completePendingCommand()) {
+                Log.d("NGS", "pending is false");
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean answer(String userName, String userMail, String articleText, String subject,
+                          String group, String articleId, List<String> references) {
+        try {
+            if (!client.isAllowedToPost())
+                return false;
+
+            Writer writer = client.postArticle();
+            if (writer == null) {
+                Log.d("NGS", "writer is null");
+                return false;
+            }
+
+            writer.write(constructNNTPMessage(userName, userMail, articleText, subject, group,
+                    articleId, references));
+
+            writer.close();
+            if (!client.completePendingCommand()) {
+                Log.d("NGS", "pending is false");
+                return false;
+            }
+
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    public String constructNNTPMessage(String userName, String userMail, String articleText,
+                                       String subject, String group, String articleId,
+                                       List<String> references) {
+        SimpleNNTPHeader httpHeader = new SimpleNNTPHeader(userName + " <" + userMail + ">", subject);
+        httpHeader.addNewsgroup(group);
+        if (references != null) {
+            String httpReference = "";
+            if (references.size() != 0) {
+                for (String reference : references) {
+                    httpReference += reference + " ";
+                }
+            }
+            httpReference += articleId;
+            httpHeader.addHeaderField("References", httpReference);
+        }
+        return httpHeader.toString() + new String(articleText.getBytes(StandardCharsets.ISO_8859_1));
+    }
+
 }
