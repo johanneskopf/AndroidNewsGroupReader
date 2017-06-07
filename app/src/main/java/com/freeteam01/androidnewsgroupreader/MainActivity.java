@@ -88,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements AzureServiceEvent
                 MobileServiceActivityResult result = AzureService.getInstance().getClient().onActivityResult(data);
                 if (result.isLoggedIn()) {
                     Log.d("AzureService", "LoginActivity - login succeeded");
-                    createAndShowDialog(String.format("You are now logged in - %1$2s", AzureService.getInstance().getClient().getCurrentUser().getUserId()), "Success");
 
                     AzureService.getInstance().OnAuthenticated();
 
